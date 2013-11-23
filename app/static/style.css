@@ -1,0 +1,47 @@
+select {
+	padding: 3px;
+	width: 100px;
+	}
+
+#statut, #download, #upload {
+	display: inline-block;
+	vertical-align: top;
+	text-align: justify;
+	width: 30%;
+	/*margin: 10px;*/
+}
+
+ul {
+	list-style-type: none;
+}
+
+tr:nth-child(odd) {
+   background-color: #ccc;
+}
+/* minimaliste table
+ *
+ * table
+{
+	font-family: "Lucida Sans Unicode", "Lucida Grande", Sans-Serif;
+	font-size: 12px;
+	margin: 45px;
+	width: 480px;
+	text-align: left;
+	border-collapse: collapse;
+}
+table th
+{
+	font-size: 14px;
+	font-weight: normal;
+	padding: 10px 8px;
+	color: #039;
+}
+table td
+{
+	padding: 8px;
+	color: #669;
+}
+table .odd
+{
+	background: #e8edff; 
+} */

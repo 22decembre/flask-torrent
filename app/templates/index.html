@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Hello, {{user}} !</h1>
+
+<form action="/index" method="post" name="index">
+    {{form.hidden_tag()}}
+    <p>Add a torrent (url web and magnet only at the moment) :<br />
+    {{form.torrentseed_url(size=100)}} <button type="submit" value="Envoyer">Send</button></p>
+</form>
+
+<section class="listing">
+{% for torrent in torrents %}
+<form action="/index" method="post" name="torrent">
+{{torrent.control.hidden_tag()}}
+{# we shall be able to adjust bandwich priority of the torrents there ! #}
+<p><a href='/torrent/{{torrent.id}}'>{{torrent.name}}</a> is {{torrent.status}} and {{torrent.progress}} % finished.
+<button type="submit" name="torrent_id" value="{{torrent.id}}">Start / Stop</button>
+</p>
+</form>
+</section>
+{% endfor %}
+{% endblock %}

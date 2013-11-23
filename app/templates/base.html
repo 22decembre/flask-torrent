@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="stylesheet" type="text/css" media="screen" href="/static/style.css">
+    <script src="/static/moment.js"></script>
+    <meta charset="utf-8" />
+    {% if title %}
+    <title>{{title}} - torrents</title>
+    {% else %}
+    <title>torrents</title>
+    {% endif %}
+  </head>
+  <body>
+	<nav>
+		<a href="/index">Torrents</a>
+		<a href="#">Admin</a>
+		<a href="#">Link</a>
+	</nav>
+    {# <hr> #}
+    {% block content %}{% endblock %}
+	</div>
+  </body>
+</html>

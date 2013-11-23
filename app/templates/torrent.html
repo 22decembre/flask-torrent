@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{torrent.name}} is {{torrent.status}}</h1>
+
+<form action="/torrent/{{torrent.id}}" method="post" name="torrent" >
+{{control.hidden_tag()}}
+<p><button name="button" id="button" type="submit" value="st">Start / Stop</button><button name="button" id="button" type="submit" value="update">Update</button></p>
+
+<section>
+	<div id="statut">
+		<ul>
+		<li>Progress of download process : {{torrent.progress}} %</li>
+		<li>Priority : {{control.bandwidthpriority(default=torrent.bandwidthPriority)}}</li>
+		<li>Date of start : {{momentjs(torrent.addedDate).calendar()}}</li>
+		<li>Last start date : {{torrent.startDate}}</li>
+		<li>Estimated remaining time : {{torrent.eta}}</li>
+		<li>Leechers : {{torrent.leechers}}</li>
+		<li>Seeders : {{torrent.seeders}}</li>
+		</ul>
+	</div>
+	<div id="download">
+		<ul>
+		<li>Number of peers sending to us : {{torrent.peersSendingToUs}}</li>
+		<li>Download rate : {{torrent.rateDownload}} bits/s</li>
+		<li>Download limit : {{control.downloadlimit(value=torrent.downloadLimit)}} KB/s</li>
+		<li>{{torrent.downloadLimitMode}}</li>
+		<li>Corrupt data downloaded : {{torrent.corruptEver|filesize}}</li>
+		</ul>
+	</div>
+	<div id="upload">
+		<ul>
+		<li>Number of peers getting from us : {{torrent.peersGettingFromUs}}</li>
+		<li>Upload rate : {{torrent.rateUpload}} bits/s</li>
+		<li>Upload limit : {{control.uploadlimit(value=torrent.uploadLimit)}} KB/s</li>
+		<li>{{torrent.UploadLimitMode}}</li>
+		<li>{{torrent.seedRatioMode}}</li>
+		<li>Ratio limit : {{control.ratiolimit(value=torrent.seedRatioLimit,step=0.1)}}</li>
+		<li>Ratio : {{torrent.ratio}}</li>
+		</ul>
+	</div>
+	<p>Total size : {{torrent.totalSize|filesize}}</p>
+
+	{% if torrent.error != 0 %}
+	<p>There's a {{torrent.error}} :<br />
+	{{torrent.errorString}}</p>
+	{% endif %}
+</section>
+
+<section class="listing">
+	<h2>Files</h2>
+	<table>
+		<tr>
+			<th>File name</th>
+			<th>Completed / Size</th>
+			<th>Priority</th>
+		</tr>
+		{% for file in files %}
+		<tr>
+		{{file.form.hidden_tag()}}
+		<td>{{file.name}}</td>
+		<td>{{file.completed|filesize}} / {{file.size|filesize}}</td>
+		<td>{{file.form.priority}}</td>
+		{# <td><button type="submit">Send</button></td> #}
+		</tr>
+		{% endfor %}
+	</table>
+</section>
+</form>
+{% endblock %}
