@@ -2,8 +2,13 @@
 
 from flask.ext.wtf import Form
 from wtforms.fields.html5 import DecimalField
-from wtforms import TextField, BooleanField, FileField, SelectField, HiddenField
+from wtforms import TextField, BooleanField, FileField, SelectField, HiddenField, PasswordField
 from wtforms.validators import Required
+
+class LoginForm(Form):
+    username = TextField("username")
+    password = PasswordField("password", validators = [Required()])
+    remember_me = BooleanField('remember_me', default = False)
 
 class Torrent(Form):
 	hidden = HiddenField('hidden')

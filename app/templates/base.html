@@ -12,9 +12,11 @@
   </head>
   <body>
 	<nav>
+		{% if g.user.is_authenticated() %}
 		<a href="/index">Torrents</a>
 		<a href="#">Admin</a>
-		<a href="#">Link</a>
+		<a href="/logout">Log out</a>
+		{% endif %}
 	</nav>
     {# <hr> #}
     {% block content %}{% endblock %}
