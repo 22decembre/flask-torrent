@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
-from app   import app, lm
+from werkzeug import secure_filename
+from app   import app, lm, basedir
 from forms import TorrentSeedForm, TorrentFileDetails, Torrent, LoginForm
 from models import User
 import transmissionrpc as tr
-import sys
+import sys, os, base64
+
+UPLOAD_FOLDER = '/tmp'
 
 # need to be variabilized
 client = tr.Client(address=app.config['TRANSMISSION_HOST'],
-		   port= app.config['TRANSMISSION_PORT'],
+		   port=app.config['TRANSMISSION_PORT'],
 		   user=app.config['TRANSMISSION_USER'],
 		   password=app.config['TRANSMISSION_PASS'], http_handler=None, timeout=None)
 
@@ -48,6 +51,7 @@ def login():
 	return render_template("login.html", form=form)
 
 @app.route('/torrent/<tor_id>', methods = ['GET','POST'])
+@login_required
 def torrent(tor_id):
 	torrent = client.get_torrent(tor_id)
 	###
@@ -88,6 +92,7 @@ def torrent(tor_id):
 
 @app.route('/')
 @app.route('/index', methods = ['GET', 'POST'])
+@login_required
 def index():
 	user = g.user
 	torrents = client.get_torrents()
@@ -101,7 +106,15 @@ def index():
 	# envoi d'un nouveau torrent
 	form = TorrentSeedForm()
 	if form.validate_on_submit():
+		if form.torrentseed_file.data.mimetype == 'application/x-bittorrent':
+			#torrent_to_start = form.torrentseed_file.data
+			filename = secure_filename(form.torrentseed_file.data.filename)
+			form.torrentseed_file.data.save(os.path.join(basedir + '/tmp', filename))
+			f = open(basedir + '/tmp/' + filename)
+			torrent_to_start = base64.b64encode(f.read())
+		else:
+			torrent_to_start = form.torrentseed_url.data
 		#form.torrentfile_url.data
-		client.add_torrent(form.torrentseed_url.data)
+		client.add_torrent(torrent_to_start)
 	
 	return render_template("index.html", form = form, title = "Home", user = user, torrents = torrents)

@@ -2,10 +2,11 @@
 {% block content %}
 <h1>Hello, {{user}} !</h1>
 
-<form action="/index" method="post" name="index">
+<form action="/index" method="post" name="index" enctype="multipart/form-data">
     {{form.hidden_tag()}}
     <p>Add a torrent (url web and magnet only at the moment) :<br />
-    {{form.torrentseed_url(size=100)}} <button type="submit" value="Envoyer">Send</button></p>
+    {{form.torrentseed_url(size=100)}} <br />
+    {{form.torrentseed_file}}<button type="submit" value="Envoyer">Send</button></p>
 </form>
 
 <section class="listing">

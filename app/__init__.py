@@ -2,6 +2,7 @@
 
 from flask import Flask
 from flask.ext.login import LoginManager, login_user, UserMixin, login_required, logout_user, current_user
+import os
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -9,6 +10,8 @@ app.config.from_object('config')
 lm = LoginManager()
 lm.init_app(app)
 lm.login_view = 'login'
+
+basedir = os.path.abspath(os.path.dirname(__file__))
 
 from app import views, filesize
 
