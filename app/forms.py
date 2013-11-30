@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
 from flask.ext.wtf import Form
+from flask.ext.wtf.file import FileField, file_allowed
 from wtforms.fields.html5 import DecimalField
-from wtforms import TextField, BooleanField, FileField, SelectField, HiddenField, PasswordField
+from wtforms import TextField, BooleanField, SelectField, HiddenField, PasswordField
 from wtforms.validators import Required
 
 class LoginForm(Form):
@@ -10,7 +11,7 @@ class LoginForm(Form):
     password = PasswordField("password", validators = [Required()])
     remember_me = BooleanField('remember_me', default = False)
 
-class Torrent(Form):
+class TorrentForm(Form):
 	hidden = HiddenField('hidden')
 	ratiolimit 	= DecimalField("ratio")
 	downloadlimit 	= DecimalField("down")
@@ -22,4 +23,5 @@ class TorrentFileDetails(Form):
 	priority = SelectField(u'File priority',choices=[('off','off'),('low','low'),('normal','normal'),('high','high')])
 
 class TorrentSeedForm(Form):
-    torrentseed_url = TextField('torrentseed_url', validators = [Required()])
+    torrentseed_url = TextField('torrentseed_url')
+    torrentseed_file = FileField('torrentseed_file')

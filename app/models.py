@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from app import app
+from app import app, db
 from flask.ext.login import login_user, UserMixin
 import ldap
+
+class Torrent(db.Model):
+	id = db.Column(db.Integer, primary_key = True)
+	user = db.Column(db.String(64), index = True, unique = True)
+	hashstring = db.Column(db.String(200), index = True, unique = True)
 
 class User(UserMixin):
 	# ident can be : stephane (name), or stephane@22...(mail) or...
@@ -38,6 +43,7 @@ class User(UserMixin):
 		self.active = True
 		self.name = result[0][1]['uid'][0]
 		self.home = result[0][1]['homeDirectory'][0]
+		self.dl_dir = self.home + '/torrents/'
 		if result[0][1]['mail'] is not None:
 			self.mail = result[0][1]['mail'][0]
 		else:

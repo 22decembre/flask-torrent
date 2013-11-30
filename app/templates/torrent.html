@@ -2,11 +2,11 @@
 {% block content %}
 <h1>{{torrent.name}} is {{torrent.status}}</h1>
 
-<form action="/torrent/{{torrent.id}}" method="post" name="torrent" >
+<form action="/torrent/{{torrent.hashString}}" method="post" name="torrent" >
 {{control.hidden_tag()}}
 <p>
-	<button name="start" id="start" type="submit" value="start">Start</button>
-	<button name="stop" id="stop" type="submit" value="stop">Stop</button>
+	<a href="/start/{{torrent.hashString}}">Start</a>
+	<a href="/stop/{{torrent.hashString}}">Stop</a>
 	<button name="button" id="button" type="submit" value="update">Update</button>
 </p>
 
@@ -17,9 +17,9 @@
 		<li>Priority : {{control.bandwidthpriority(default=torrent.bandwidthPriority)}}</li>
 		<li>Date of start : {{momentjs(torrent.addedDate).calendar()}}</li>
 		<li>Last start date : {{torrent.startDate}}</li>
-		<li>Estimated remaining time : {{torrent.eta}}</li>
+		{# <li>Estimated remaining time : {{torrent.eta}}</li>
 		<li>Leechers : {{torrent.leechers}}</li>
-		<li>Seeders : {{torrent.seeders}}</li>
+		<li>Seeders : {{torrent.seeders}}</li> #}
 		</ul>
 	</div>
 	<div id="download">
