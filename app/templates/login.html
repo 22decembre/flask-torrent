@@ -2,12 +2,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Authentification</h1>
-<form action="" method="post" name="login">
+<form class="uk-form" action="" method="post" name="login">
+<fieldset>
+	<legend>Authentification</legend>
     {{form.hidden_tag()}}
-    <p><label for="username">Nom : </label>{{form.username}}</p>
-    <p><label for="password">Mot de passe : </label>{{form.password}}</p>
-    <p>{{form.remember_me}} Remember Me</p>
-    <p><input type="submit" value="Login"></p>
+    {{form.username}}
+    {{form.password}}
+    {{form.remember_me}}
+    <button class="uk-button" type="submit" value="Login">Login</button>
 </form>
 {% endblock %}

@@ -6,7 +6,7 @@ import ldap
 
 class Torrent(db.Model):
 	id = db.Column(db.Integer, primary_key = True)
-	user = db.Column(db.String(64), index = True, unique = True)
+	user = db.Column(db.String(64), index = True)
 	hashstring = db.Column(db.String(200), index = True, unique = True)
 
 class User(UserMixin):

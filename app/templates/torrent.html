@@ -2,17 +2,20 @@
 {% block content %}
 <h1>{{torrent.name}} is {{torrent.status}}</h1>
 
-<form action="/torrent/{{torrent.hashString}}" method="post" name="torrent" >
+<form class="uk-form" action="/torrent/{{torrent.hashString}}" method="post" name="torrent" >
 {{control.hidden_tag()}}
 <p>
-	<a href="/start/{{torrent.hashString}}">Start</a>
-	<a href="/stop/{{torrent.hashString}}">Stop</a>
-	<button name="button" id="button" type="submit" value="update">Update</button>
+	<ul class="uk-breadcrumb">
+		<li><a href='/start/{{torrent.hashString}}'>Start</a></li>
+		<li><a href='/stop/{{torrent.hashString}}'>Stop</a></li>
+	</ul>
+	<button class="uk-button" name="button" id="button" type="submit" value="update">Update</button>
 </p>
 
-<section>
-	<div id="statut">
-		<ul>
+<div class="uk-grid">
+	<div class="uk-width-1-3 uk-panel uk-panel-header">
+		<h3 class="uk-panel-title">Status</h3>
+		<ul class="uk-list">
 		<li>Progress of download process : {{torrent.progress}} %</li>
 		<li>Priority : {{control.bandwidthpriority(default=torrent.bandwidthPriority)}}</li>
 		<li>Date of start : {{momentjs(torrent.addedDate).calendar()}}</li>
@@ -22,8 +25,9 @@
 		<li>Seeders : {{torrent.seeders}}</li> #}
 		</ul>
 	</div>
-	<div id="download">
-		<ul>
+	<div class="uk-width-1-3 uk-panel uk-panel-header">
+		<h3 class="uk-panel-title">Downloading</h3>
+		<ul class="uk-list">
 		<li>Number of peers sending to us : {{torrent.peersSendingToUs}}</li>
 		<li>Download rate : {{torrent.rateDownload}} bits/s</li>
 		<li>Download limit : {{control.downloadlimit(value=torrent.downloadLimit)}} KB/s</li>
@@ -31,8 +35,9 @@
 		<li>Corrupt data downloaded : {{torrent.corruptEver|filesize}}</li>
 		</ul>
 	</div>
-	<div id="upload">
-		<ul>
+	<div class="uk-width-1-3 uk-panel uk-panel-header">
+		<h3 class="uk-panel-title">Uploading</h3>
+		<ul class="uk-list">
 		<li>Number of peers getting from us : {{torrent.peersGettingFromUs}}</li>
 		<li>Upload rate : {{torrent.rateUpload}} bits/s</li>
 		<li>Upload limit : {{control.uploadlimit(value=torrent.uploadLimit)}} KB/s</li>
@@ -42,32 +47,32 @@
 		<li>Ratio : {{torrent.ratio}}</li>
 		</ul>
 	</div>
+</div>
+
 	<p>Total size : {{torrent.totalSize|filesize}}</p>
 
 	{% if torrent.error != 0 %}
 	<p>There's a {{torrent.error}} :<br />
 	{{torrent.errorString}}</p>
 	{% endif %}
-</section>
 
-<section class="listing">
 	<h2>Files</h2>
-	<table>
+	<table class="uk-table">
 		<tr>
 			<th>File name</th>
 			<th>Completed / Size</th>
 			<th>Priority</th>
 		</tr>
-		{% for file in files %}
+		
+		{% for file in control.files %}
 		<tr>
-		{{file.form.hidden_tag()}}
-		<td>{{file.name}}</td>
-		<td>{{file.completed|filesize}} / {{file.size|filesize}}</td>
-		<td>{{file.form.priority}}</td>
-		{# <td><button type="submit">Send</button></td> #}
+			{# {{file.hidden_tag()}} #}
+			<td>{{file.filename.data}}</td>
+			<td>{{file.completed.data}} / {{file.size.data}}</td>
+			<td>{{file.priority}}</td>
+			{# <td><button type="submit">Send</button></td> #}
 		</tr>
 		{% endfor %}
 	</table>
-</section>
 </form>
 {% endblock %}

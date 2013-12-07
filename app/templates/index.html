@@ -2,23 +2,45 @@
 {% block content %}
 <h1>Hello, {{user}} !</h1>
 
-<form action="/index" method="post" name="index" enctype="multipart/form-data">
+<form class="uk-form" action="/index" method="post" name="index" enctype="multipart/form-data">
+<fieldset>
     {{form.hidden_tag()}}
-    <p>Envoyer un torrent (url web, magnet ou torrent seed) puis valider par le bouton "Envoyer" :<br />
-    {{form.torrentseed_url(size=100)}}<br />
-    {{form.torrentseed_file}}
-    <button type="submit" value="Envoyer">Envoyer</button></p>
+    <legend>Envoyer un nouveau torrent</legend>
+    <p>Url (web or magnet) : {{form.torrentseed_url(size=100)}}</p>
+    <p>File : {{form.torrentseed_file}}</p>
+    <button class="uk-button" type="submit" value="Envoyer">Envoyer</button>
+</fieldset>
 </form>
 
-<section class="listing">
+<table class="uk-table">
+	<tr>
+		<th>Torrent</th>
+		{# <th>Priority</th> #}
+		<th>Controls</th>
+	</tr>
+
 	{% for torrent in torrents %}
-	<hr>
 	{# <form action="/index" method="post" name="torrent">
 	{{torrent.control_form.hidden_tag()}} #}
+	<tr>
 		{# we shall be able to adjust bandwich priority of the torrents there ! #}
-		<p><a href='/torrent/{{torrent.hashString}}'>{{torrent.name}}</a> is {{torrent.status}} and {{torrent.progress|round(2,'common')}} % finished.
-		<a href='/start/{{torrent.hashString}}'>Start</a> | <a href='/stop/{{torrent.hashString}}'>Stop</a> | <a href='/del/{{torrent.hashString}}'>Del</a></td> | <a href='/del_tot/{{torrent.hashString}}'>Del totally</a></p>
-{# </form> #}
-</section>
-{% endfor %}
+		<td>
+			<p><a href='/torrent/{{torrent.hashString}}'>{{torrent.name}}</a> is {{torrent.status}} and {{torrent.progress|round(2,'common')}} % finished.</p>
+		</td>
+		{# <td>
+		{{torrent.bandwidthpriority(default=torrent.bandwidthPriority)}}
+		</td> #}
+		<td>
+			<ul class="uk-breadcrumb">
+				<li><a href='/start/{{torrent.hashString}}'>Start</a></li>
+				<li><a href='/stop/{{torrent.hashString}}'>Stop</a></li>
+				<li><a href='/del/{{torrent.hashString}}'>Del</a></li>
+				<li><a href='/del_tot/{{torrent.hashString}}'>Del totally</a></li>
+			</ul>
+		</td>
+	</tr>
+	{% endfor %}
+	{# </form> #}
+</table>
+
 {% endblock %}

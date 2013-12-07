@@ -11,12 +11,37 @@ import sys, os, base64
 
 # need to be variabilized
 client = tr.Client(address=app.config['TRANSMISSION_HOST'],
-		   port=app.config['TRANSMISSION_PORT'],
-		   user=app.config['TRANSMISSION_USER'],
-		   password=app.config['TRANSMISSION_PASS'], http_handler=None, timeout=None)
+		port=app.config['TRANSMISSION_PORT'],
+		user=app.config['TRANSMISSION_USER'],
+		password=app.config['TRANSMISSION_PASS'], http_handler=None, timeout=None)
+# tr_session car il y a déjà un session quelque part : la session web avec auth et mots de passe (entre autre)
+tr_session = tr.Session(client)
+tr_session.script_torrent_done_enabled = True
+tr_session.script_torrent_done_filename = "finish.py"
 
 def redirect_url():
     return request.referrer or url_for('index')
+
+# forbidden -> used when user try to go to a torrent he doesn't own
+@app.errorhandler(403)
+def internal_error(error):
+    return render_template('403.html'), 403
+
+# page / torrent doesn'y exist
+@app.errorhandler(404)
+def internal_error(error):
+    return render_template('404.html'), 404
+
+# page / torrent doesn'y exist anymore ! (but used too ...)
+@app.errorhandler(410)
+def internal_error(error):
+    return render_template('410.html'), 410
+
+@app.errorhandler(500)
+def internal_error(error):
+    db.session.rollback()
+    return render_template('500.html'), 500
+
 
 @app.before_request
 def before_request():
@@ -53,11 +78,14 @@ def login():
 @login_required
 def torrent(tor_id):
 	user = g.user
+	
+	# fetch informations about the torrent from transmission
 	torrent = client.get_torrent(tor_id)
+	
+	# fetch information about the torrent from DB
 	tordb = Torrent.query.filter_by(hashstring = torrent.hashString).first()
 	if tordb.user != unicode(user):
-		message = "This is not your torrent ! You're not allowed to see it ! Please return to index or login page."
-		return render_template("error.html", message = message)
+		return render_template("404.html")
 	else:
 		###
 		#error = ''
@@ -74,25 +102,26 @@ def torrent(tor_id):
 			torrent.seedRatioMode = 'Individual ratio limit'
 		if torrent.seedRatioMode == 2:
 			torrent.seedRatioMode = 'Unlimited seeding'
-		###
-		files = list()
-		for f in torrent.files():
-			fx = dict()
-			fx['name'] = torrent.files()[f]['name']
-			if torrent.files()[f]['selected'] == True:
-				fx['priority'] = torrent.files()[f]['priority']
-			else:
-				fx['priority'] = 0
-			fx['size'] = torrent.files()[f]['size']
-			fx['completed'] = torrent.files()[f]['completed']
-			fx['form'] = TorrentFileDetails(priority=fx['priority'])
-			files.append(fx)
-		
+			
 		control = TorrentForm(bandwidthpriority=torrent.bandwidthPriority)
+		###
+		for f in torrent.files():
+			if torrent.files()[f]['selected'] == True:
+				priority = torrent.files()[f]['priority']
+			else:
+				priority = 0
+			f_form = TorrentFileDetails()
+			f_form.filename	= unicode(torrent.files()[f]['name'])
+			f_form.priority = priority
+			f_form.size 	= torrent.files()[f]['size']
+			f_form.completed = torrent.files()[f]['completed']
+			
+			control.files.append_entry(f_form)
+		
 		if control.validate_on_submit():
 			type(button.data)
 			#start_stop_torrent(tor_id)
-		return render_template("torrent.html", title = torrent.name, files = files, user = user, torrent = torrent, control = control)
+		return render_template("torrent.html", title = torrent.name, user = user, torrent = torrent, control = control)
 
 @app.route('/start/<tor_id>', methods = ['GET','POST'])
 @login_required
@@ -130,7 +159,10 @@ def torrent_del(tor_id):
 @app.route('/index', methods = ['GET', 'POST'])
 @login_required
 def index():
-	user = g.user
+	#user = g.user
+	# recuperer les torrents de l'utilisateur et de lui uniquement !
+	#torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
+	
 	torrents = client.get_torrents()
 	
 	# for each torrent, we include a form which will allow start or stop
@@ -155,12 +187,16 @@ def index():
 		try:
 			# ON ajoute le torrent à transmission
 			new_tor = client.add_torrent(torrent_to_start)
+			new_tor.downloadDir = g.user.dl_dir
+			print(g.user.dl_dir)
+			new_tor.update()
 			
 			# on ajoute le torrent à la base de données pour se souvenir à qui il appartient.
 			torrent_to_add = Torrent(hashstring=new_tor.hashString,user=unicode(g.user))
+			print(new_tor.downloadDir)
 			db.session.add(torrent_to_add)
 			db.session.commit()
-		except:
-			print("erreur !")
+		except tr.TransmissionError:
+			print(message)
 		
-	return render_template("index.html", form = form, title = "Home", user = user, torrents = torrents)
+	return render_template("index.html", form = form, title = "Home", user = g.user, torrents = torrents)
