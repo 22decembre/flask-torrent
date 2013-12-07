@@ -17,6 +17,11 @@ class TorrentFileDetails(Form):
 	size	 = HiddenField('size')
 	completed = HiddenField('completed')
 	priority = SelectField(u'File priority',choices=[('off','off'),('low','low'),('normal','normal'),('high','high')])
+	
+	# we desactivate the csrf cause this particular form is within the TorretForm, so it can't be several csrf at the same time !
+	def __init__(self, *args, **kwargs):
+		kwargs['csrf_enabled'] = False
+		super(TorrentFileDetails, self).__init__(*args, **kwargs)
 
 class TorrentForm(Form):
 	hidden 		= HiddenField('hidden')

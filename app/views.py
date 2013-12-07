@@ -110,7 +110,7 @@ def torrent(tor_id):
 				priority = torrent.files()[f]['priority']
 			else:
 				priority = 0
-			f_form = TorrentFileDetails()
+			f_form = TorrentFileDetails(csrf_enabled=False)
 			f_form.filename	= unicode(torrent.files()[f]['name'])
 			f_form.priority = priority
 			f_form.size 	= torrent.files()[f]['size']
@@ -118,8 +118,36 @@ def torrent(tor_id):
 			
 			control.files.append_entry(f_form)
 		
-		if control.validate_on_submit():
-			type(button.data)
+		# the form is not validated because of the csrf trick !
+		if control.is_submitted():
+			update = False
+			if control.ratiolimit.data != torrent.seedRatioLimit:
+				torrent.seed_ratio_limit = float(control.ratiolimit.data)
+				torrent.seed_ratio_mode = 'single'
+				update = True
+			if control.downloadlimit.data != torrent.downloadLimit:
+				torrent.download_limit = int(control.downloadlimit.data)
+				update = True
+			if control.uploadlimit.data != torrent.uploadLimit:
+				torrent.upload_limit = int(control.uploadlimit.data)
+				update = True
+			if control.bandwidthpriority.data != torrent.bandwidthPriority:
+				if control.bandwidthpriority.data == '-1':
+					print('low')
+					torrent.priority = 'low'
+				if control.bandwidthpriority.data == '1':
+					print('high')
+					torrent.priority = 'high'
+				if control.bandwidthpriority.data == '0':
+					print('normal')
+					torrent.priority = 'normal'
+				update = True
+			#for x in control.files:
+			#	prio = x.priority.data
+			#	file_id = x.filename.data
+				
+			if update:
+				torrent.update()
 			#start_stop_torrent(tor_id)
 		return render_template("torrent.html", title = torrent.name, user = user, torrent = torrent, control = control)
 
