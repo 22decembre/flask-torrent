@@ -13,10 +13,12 @@ class LoginForm(Form):
 
 # each individual file in the torrent have its own priority, thus, we need to manage them individually !
 class TorrentFileDetails(Form):
+	key	 = HiddenField('key')
 	filename = HiddenField('filename')
 	size	 = HiddenField('size')
 	completed = HiddenField('completed')
-	priority = SelectField(u'File priority',choices=[('off','off'),('low','low'),('normal','normal'),('high','high')])
+	selected = BooleanField('selected')
+	priority = SelectField(u'File priority',choices=[('low','low'),('normal','normal'),('high','high')])
 	
 	# we desactivate the csrf cause this particular form is within the TorretForm, so it can't be several csrf at the same time !
 	def __init__(self, *args, **kwargs):
@@ -24,8 +26,9 @@ class TorrentFileDetails(Form):
 		super(TorrentFileDetails, self).__init__(*args, **kwargs)
 
 class TorrentForm(Form):
-	hidden 		= HiddenField('hidden')
+	csrf 		= HiddenField('csrf')
 	ratiolimit 	= DecimalField("ratio")
+	ratiomode	= SelectField(u'Ratio mode', choices=[(0,'Global ratio limit'),(1,'Individual ratio limit'),(2,'Unlimited seeding')])
 	downloadlimit 	= DecimalField("down")
 	uploadlimit 	= DecimalField("up")
 	bandwidthpriority = SelectField(u'Torrent priority', choices=[( -1,'low'),(0,'normal'),(1,'high')])

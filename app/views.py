@@ -7,7 +7,7 @@ from config import basedir
 from forms import TorrentSeedForm, TorrentFileDetails, TorrentForm, LoginForm
 from models import User, Torrent
 import transmissionrpc as tr
-import sys, os, base64
+import sys, os, base64, magic
 
 # need to be variabilized
 client = tr.Client(address=app.config['TRANSMISSION_HOST'],
@@ -41,7 +41,6 @@ def internal_error(error):
 def internal_error(error):
     db.session.rollback()
     return render_template('500.html'), 500
-
 
 @app.before_request
 def before_request():
@@ -81,7 +80,6 @@ def torrent(tor_id):
 	
 	# fetch informations about the torrent from transmission
 	torrent = client.get_torrent(tor_id)
-	
 	# fetch information about the torrent from DB
 	tordb = Torrent.query.filter_by(hashstring = torrent.hashString).first()
 	if tordb.user != unicode(user):
@@ -95,36 +93,53 @@ def torrent(tor_id):
 			torrent.error = 'tracker error'
 		if torrent.error == 3:
 			torrent.error = 'local error'
+		
 		###
-		if torrent.seedRatioMode == 0:
-			torrent.seedRatioMode = 'Global ratio limit'
-		if torrent.seedRatioMode == 1:
-			torrent.seedRatioMode = 'Individual ratio limit'
-		if torrent.seedRatioMode == 2:
-			torrent.seedRatioMode = 'Unlimited seeding'
-			
-		control = TorrentForm(bandwidthpriority=torrent.bandwidthPriority)
+		#if torrent.seedRatioMode == 0:
+		#	torrent.seedRatioMode = 'Global ratio limit'
+		#if torrent.seedRatioMode == 1:
+		#	torrent.seedRatioMode = 'Individual ratio limit'
+		#if torrent.seedRatioMode == 2:
+		#	torrent.seedRatioMode = 'Unlimited seeding'
+		control = TorrentForm(bandwidthpriority=torrent.bandwidthPriority,ratiomode=torrent.seedRatioMode)
 		###
-		for f in torrent.files():
-			if torrent.files()[f]['selected'] == True:
-				priority = torrent.files()[f]['priority']
-			else:
-				priority = 0
+		for file_x in client.get_files(tor_id)[torrent.id]:
 			f_form = TorrentFileDetails(csrf_enabled=False)
-			f_form.filename	= unicode(torrent.files()[f]['name'])
-			f_form.priority = priority
-			f_form.size 	= torrent.files()[f]['size']
-			f_form.completed = torrent.files()[f]['completed']
+			f_form.key = file_x
+			f_form.filename	= unicode(client.get_files(tor_id)[torrent.id][file_x]['name'])
+			f_form.priority  = client.get_files(tor_id)[torrent.id][file_x]['priority']
+			f_form.size 	 = client.get_files(tor_id)[torrent.id][file_x]['size']
+			f_form.completed = client.get_files(tor_id)[torrent.id][file_x]['completed']
+			f_form.selected  = client.get_files(tor_id)[torrent.id][file_x]['selected']
 			
 			control.files.append_entry(f_form)
 		
 		# the form is not validated because of the csrf trick !
 		if control.is_submitted():
 			update = False
-			if control.ratiolimit.data != torrent.seedRatioLimit:
-				torrent.seed_ratio_limit = float(control.ratiolimit.data)
-				torrent.seed_ratio_mode = 'single'
+			# by default, ratio limit can be updated !
+			update_ratio_limit = True
+			if control.ratiomode.data != torrent.seedRatioMode:
+				
+				if control.ratiomode.data == '0':
+					torrent.seed_ratio_mode = 'global'
+					# we don't allow anymore the ratio limit to be updated : the ratiolimit will be the gloabal one !
+					update_ratio_limit = False
+				if control.ratiomode.data == '1':
+					torrent.seed_ratio_mode = 'single'
+				if control.ratiomode.data == '2':
+					torrent.seed_ratio_mode = 'unlimited'
+					# we don't allow anymore the ratio limit to be updated : the ratiolimit will be the gloabal one !
+					update_ratio_limit = False
 				update = True
+			# if we are still allowed to update ratio limit
+			# eg : we haven't touched ratiomode in form - update_ratio_limit is still at its default : true
+			# or it has been changed to single mode
+			if update_ratio_limit:
+				if control.ratiolimit.data != torrent.seedRatioLimit:
+					torrent.seed_ratio_limit = float(control.ratiolimit.data)
+					torrent.seed_ratio_mode = 'single'
+					update = True
 			if control.downloadlimit.data != torrent.downloadLimit:
 				torrent.download_limit = int(control.downloadlimit.data)
 				update = True
@@ -133,19 +148,39 @@ def torrent(tor_id):
 				update = True
 			if control.bandwidthpriority.data != torrent.bandwidthPriority:
 				if control.bandwidthpriority.data == '-1':
-					print('low')
 					torrent.priority = 'low'
 				if control.bandwidthpriority.data == '1':
-					print('high')
 					torrent.priority = 'high'
 				if control.bandwidthpriority.data == '0':
-					print('normal')
 					torrent.priority = 'normal'
 				update = True
-			#for x in control.files:
-			#	prio = x.priority.data
-			#	file_id = x.filename.data
+			
+			# we use the ID returned by transmission itself ! Not the hashString.
+			# the first torrent.id is to say which torrent we are talking about. Transmission gives us a dict containing the info for the torrents asked.
+			# so the dict contains ONE torrent info
+			# but still, begin with the torrent.id, this is why the second torrent.id
+			#files_dict = client.get_files(torrent.id)[torrent.id]
+			files_answers = {}
+			
+			for file_un in control.files:
+				# create a dict that contains the new priority for each file according to the form
+				file_answer = {}
+				if file_un.priority.data != client.get_files(tor_id)[torrent.id][int(file_un.key.data)]['priority']:
+					file_answer['priority'] = file_un.priority.data
 				
+				if file_un.selected.data != client.get_files(tor_id)[torrent.id][int(file_un.key.data)]['selected']:
+					file_answer['selected'] = file_un.selected.data
+				
+				# append the dict to the general dict previously created (files_answers).
+				# the key is the ID of the file itself ! >> no value name !
+				files_answers[int(file_un.key.data)] = file_answer
+			
+			#finally, we create the last dict which will contain only one value : the files_answers dict !
+			answer = {}
+			answer[int(torrent.id)] = files_answers
+			update = True
+			client.set_files(answer)
+			
 			if update:
 				torrent.update()
 			#start_stop_torrent(tor_id)
@@ -189,16 +224,11 @@ def torrent_del(tor_id):
 def index():
 	#user = g.user
 	# recuperer les torrents de l'utilisateur et de lui uniquement !
-	#torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
-	
-	torrents = client.get_torrents()
-	
-	# for each torrent, we include a form which will allow start or stop
-	# for torrent_to_control in torrents:
-	#	torrent_to_control.control_form = TorrentForm()
-	#	torrent_to_control.control_form.hidden.value = torrent_to_control.id
-		#if torrent_to_control.control_form.validate_on_submit():
-			#start_stop_torrent(request.form["torrent_id"])
+	torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
+	listing =list()
+	for x in torrents_from_db:
+		listing.append(x.hashstring)
+	torrents = client.get_torrents(listing)
 	
 	# envoi d'un nouveau torrent
 	form = TorrentSeedForm()
@@ -216,12 +246,13 @@ def index():
 			# ON ajoute le torrent à transmission
 			new_tor = client.add_torrent(torrent_to_start)
 			new_tor.downloadDir = g.user.dl_dir
+
 			print(g.user.dl_dir)
 			new_tor.update()
+			print(new_tor.comment)
 			
 			# on ajoute le torrent à la base de données pour se souvenir à qui il appartient.
 			torrent_to_add = Torrent(hashstring=new_tor.hashString,user=unicode(g.user))
-			print(new_tor.downloadDir)
 			db.session.add(torrent_to_add)
 			db.session.commit()
 		except tr.TransmissionError:
