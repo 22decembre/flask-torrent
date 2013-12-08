@@ -101,7 +101,7 @@ def torrent(tor_id):
 		#	torrent.seedRatioMode = 'Individual ratio limit'
 		#if torrent.seedRatioMode == 2:
 		#	torrent.seedRatioMode = 'Unlimited seeding'
-		control = TorrentForm(bandwidthpriority=torrent.bandwidthPriority,ratiomode=torrent.seedRatioMode)
+		control = TorrentForm(ratiomode=torrent.seedRatioMode,bandwidthpriority=torrent.bandwidthPriority)
 		###
 		for file_x in client.get_files(tor_id)[torrent.id]:
 			f_form = TorrentFileDetails(csrf_enabled=False)
@@ -110,12 +110,13 @@ def torrent(tor_id):
 			f_form.priority  = client.get_files(tor_id)[torrent.id][file_x]['priority']
 			f_form.size 	 = client.get_files(tor_id)[torrent.id][file_x]['size']
 			f_form.completed = client.get_files(tor_id)[torrent.id][file_x]['completed']
-			f_form.selected  = client.get_files(tor_id)[torrent.id][file_x]['selected']
+			f_form.selected.default  = client.get_files(tor_id)[torrent.id][file_x]['selected']
 			
 			control.files.append_entry(f_form)
 		
 		# the form is not validated because of the csrf trick !
-		if control.is_submitted():
+		if control.validate_on_submit():
+			print('valide')
 			update = False
 			# by default, ratio limit can be updated !
 			update_ratio_limit = True
@@ -161,7 +162,6 @@ def torrent(tor_id):
 			# but still, begin with the torrent.id, this is why the second torrent.id
 			#files_dict = client.get_files(torrent.id)[torrent.id]
 			files_answers = {}
-			
 			for file_un in control.files:
 				# create a dict that contains the new priority for each file according to the form
 				file_answer = {}
@@ -184,6 +184,9 @@ def torrent(tor_id):
 			if update:
 				torrent.update()
 			#start_stop_torrent(tor_id)
+		else:
+			print(control.errors)
+			print(control.ratiomode.data)
 		return render_template("torrent.html", title = torrent.name, user = user, torrent = torrent, control = control)
 
 @app.route('/start/<tor_id>', methods = ['GET','POST'])
@@ -249,7 +252,6 @@ def index():
 
 			print(g.user.dl_dir)
 			new_tor.update()
-			print(new_tor.comment)
 			
 			# on ajoute le torrent à la base de données pour se souvenir à qui il appartient.
 			torrent_to_add = Torrent(hashstring=new_tor.hashString,user=unicode(g.user))

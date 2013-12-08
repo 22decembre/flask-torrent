@@ -26,12 +26,12 @@ class TorrentFileDetails(Form):
 		super(TorrentFileDetails, self).__init__(*args, **kwargs)
 
 class TorrentForm(Form):
-	csrf 		= HiddenField('csrf')
+	csrf 		= HiddenField('hidden')
 	ratiolimit 	= DecimalField("ratio")
-	ratiomode	= SelectField(u'Ratio mode', choices=[(0,'Global ratio limit'),(1,'Individual ratio limit'),(2,'Unlimited seeding')])
+	ratiomode	= SelectField(u'Ratio mode', choices=[('0','Global ratio limit'),('1','Individual ratio limit'),('2','Unlimited seeding')])
 	downloadlimit 	= DecimalField("down")
 	uploadlimit 	= DecimalField("up")
-	bandwidthpriority = SelectField(u'Torrent priority', choices=[( -1,'low'),(0,'normal'),(1,'high')])
+	bandwidthpriority = SelectField(u'Torrent priority', choices=[( '-1','low'),('0','normal'),('1','high')])
 	
 	# we append each individual file form to this, as we don't know how many there is in each torrent !
 	files 		= FieldList(FormField(TorrentFileDetails))

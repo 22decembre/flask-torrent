@@ -2,7 +2,7 @@
 {% block content %}
 <h1>{{torrent.name}} is {{torrent.status}}</h1>
 
-<form class="uk-form" action="/torrent/{{torrent.hashString}}" method="post" name="torrent" >
+<form class="uk-form uk-form-row uk-form-horizontal" action="/torrent/{{torrent.hashString}}" method="post" name="torrent" >
 {{control.hidden_tag()}}
 <p>
 	<ul class="uk-breadcrumb">
@@ -16,8 +16,9 @@
 	<div class="uk-width-1-3 uk-panel uk-panel-header">
 		<h3 class="uk-panel-title">Status</h3>
 		<ul class="uk-list">
+		<li>Total size : {{torrent.totalSize|filesize}}</li>
 		<li>Progress of download process : {{torrent.progress}} %</li>
-		<li>Priority : {{control.bandwidthpriority(default=torrent.bandwidthPriority)}}</li>
+		<li>Priority : {{control.bandwidthpriority}}</li>
 		<li>Date of start : {{momentjs(torrent.addedDate).calendar()}}</li>
 		<li>Last start date : {{torrent.startDate}}</li>
 		{# <li>Estimated remaining time : {{torrent.eta}}</li>
@@ -30,7 +31,7 @@
 		<ul class="uk-list">
 		<li>Number of peers sending to us : {{torrent.peersSendingToUs}}</li>
 		<li>Download rate : {{torrent.rateDownload}} bits/s</li>
-		<li>Download limit : {{control.downloadlimit(value=torrent.downloadLimit)}} KB/s</li>
+		<li>Download limit : {{control.downloadlimit(class="uk-form-width-small",value=torrent.downloadLimit)}} KB/s</li>
 		<li>{{torrent.downloadLimitMode}}</li>
 		<li>Corrupt data downloaded : {{torrent.corruptEver|filesize}}</li>
 		</ul>
@@ -40,16 +41,14 @@
 		<ul class="uk-list">
 		<li>Number of peers getting from us : {{torrent.peersGettingFromUs}}</li>
 		<li>Upload rate : {{torrent.rateUpload}} bits/s</li>
-		<li>Upload limit : {{control.uploadlimit(value=torrent.uploadLimit)}} KB/s</li>
+		<li><label class="uk-form-label" for="">Upload limit :</label><div class="uk-form-controls">{{control.uploadlimit(class="uk-form-width-small",value=torrent.uploadLimit)}} KB/s</div></li>
 		<li>{{torrent.UploadLimitMode}}</li>
-		<li>{{torrent.seedRatioMode}}</li>
-		<li>Ratio limit : {{control.ratiolimit(value=torrent.seedRatioLimit,step=0.1)}}</li>
+		<li><label class="uk-form-label" for="">Ratio mode :</label><div class="uk-form-controls">{{control.ratiomode}}</div></li>
+		<li><label class="uk-form-label" for="">Ratio limit :</label><div class="uk-form-controls">{{control.ratiolimit(class="uk-form-width-small",value=torrent.seedRatioLimit,step=0.1)}}</div></li>
 		<li>Ratio : {{torrent.ratio}}</li>
 		</ul>
 	</div>
 </div>
-
-	<p>Total size : {{torrent.totalSize|filesize}}</p>
 
 	{% if torrent.error != 0 %}
 	<p>There's a {{torrent.error}} :<br />
@@ -61,13 +60,16 @@
 		<tr>
 			<th>File name</th>
 			<th>Completed / Size</th>
+			<th>Selected</th>
 			<th>Priority</th>
 		</tr>
 		
 		{% for file in control.files %}
 		<tr>
+		{{file.key}}
 			<td>{{file.filename.data}}</td>
 			<td>{{file.completed.data}} / {{file.size.data}}</td>
+			<td>{{file.selected}}</td>
 			<td>{{file.priority}}</td>
 			{# <td><button type="submit">Send</button></td> #}
 		</tr>
