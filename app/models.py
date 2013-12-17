@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from app import app, db
+from app 	import app, db
 from flask.ext.login import login_user, UserMixin
 import ldap
 
@@ -16,7 +16,7 @@ class User(UserMixin):
 			
 		# intialisation
 		self.active = False
-		#self.password=password
+		self.admin = False
 		
 		# ldap_id : uid=stephane
 		self.ldap_id = app.config['LDAP_ID']+'='+ ident
@@ -44,13 +44,21 @@ class User(UserMixin):
 		self.name = result[0][1]['uid'][0]
 		self.home = result[0][1]['homeDirectory'][0]
 		self.dl_dir = self.home + '/torrents/'
+		
 		if result[0][1]['mail'] is not None:
 			self.mail = result[0][1]['mail'][0]
 		else:
 			self.mail = self.name
+			
+		for i in app.config['ADMINS']:
+			if self.name == i:
+				self.admin = 1
 	
 	def is_active(self):
 		return self.active
+	
+	def is_admin(self):
+		return self.admin
 	
 	def is_authenticated(self):
 		return self.active
