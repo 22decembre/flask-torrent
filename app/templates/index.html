@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h1>Hello, {{user}} !</h1>
 
-<form class="uk-form" action="/index" method="post" name="index" enctype="multipart/form-data">
+<form action="/index" method="post" name="index" enctype="multipart/form-data">
 <fieldset>
     {{form.hidden_tag()}}
     <legend>Envoyer un nouveau torrent</legend>
     <p>Url (web or magnet) : {{form.torrentseed_url(size=100)}}</p>
     <p>File : {{form.torrentseed_file}}</p>
-    <button class="uk-button" type="submit" value="Envoyer">Envoyer</button>
+    <button type="submit" value="Envoyer">Envoyer</button>
 </fieldset>
 </form>
 
-<table class="uk-table">
+<table>
 	<tr>
 		<th>Torrent</th>
 		{# <th>Priority</th> #}
@@ -31,16 +32,10 @@
 		{{torrent.bandwidthpriority(default=torrent.bandwidthPriority)}}
 		</td> #}
 		<td>
-			<ul class="uk-breadcrumb">
-				<li><a href='/start/{{torrent.hashString}}'>Start</a></li>
-				<li><a href='/stop/{{torrent.hashString}}'>Stop</a></li>
-				<li><a href='/del/{{torrent.hashString}}'>Del</a></li>
-				<li><a href='/del_tot/{{torrent.hashString}}'>Del totally</a></li>
-			</ul>
+			<a href='/start/{{torrent.hashString}}'>Start</a> | <a href='/stop/{{torrent.hashString}}'>Stop</a> | <a href='/del/{{torrent.hashString}}'>Del</a> | <a href='/del_tot/{{torrent.hashString}}'>Del totally</a></li>
 		</td>
 	</tr>
 	{% endfor %}
 	{# </form> #}
 </table>
-
 {% endblock %}

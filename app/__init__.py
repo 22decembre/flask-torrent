@@ -13,8 +13,8 @@ lm = LoginManager()
 lm.init_app(app)
 lm.login_view = 'login'
 
-from app import views, filesize
+from app import views
 
 from moment import momentjs
 app.jinja_env.globals['momentjs'] = momentjs
-app.jinja_env.filters['filesize'] = filesize.do_filesize
+#app.jinja_env.filters['filesize'] = filesize.do_filesize

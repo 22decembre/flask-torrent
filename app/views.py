@@ -3,7 +3,7 @@ from flask import render_template, flash, redirect, session, url_for, request, g
 from flask.ext.login import login_user, logout_user, current_user, login_required
 from werkzeug import secure_filename
 from app   import app, db, lm
-from config import basedir
+from config import basedir, ADMINS
 from forms import TorrentSeedForm, TorrentFileDetails, TorrentForm, LoginForm
 from models import User, Torrent
 import transmissionrpc as tr
@@ -214,7 +214,7 @@ def torrent_del(tor_id):
 
 @app.route('/del_tot/<tor_id>', methods = ['GET','POST'])
 @login_required
-def torrent_del(tor_id):
+def torrent_del_tot(tor_id):
 	torrent = client.remove_torrent(tor_id, delete_data=True)
 	torrent_to_del = Torrent.query.filter_by(hashstring=tor_id).first()
 	db.session.delete(torrent_to_del)
@@ -225,7 +225,8 @@ def torrent_del(tor_id):
 @app.route('/index', methods = ['GET', 'POST'])
 @login_required
 def index():
-	#user = g.user
+	user = g.user
+	
 	# recuperer les torrents de l'utilisateur et de lui uniquement !
 	torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
 	listing =list()
@@ -261,3 +262,15 @@ def index():
 			print(message)
 		
 	return render_template("index.html", form = form, title = "Home", user = g.user, torrents = torrents)
+
+@app.route('/')
+@app.route('/admin', methods = ['GET', 'POST'])
+@login_required
+def admin():
+	user = g.user
+	if user.is_admin():
+		torrents = client.get_torrents()
+		return render_template("index.html", title = "Home", user = g.user, torrents = torrents)
+	else:
+		return render_template("404.html")
+		

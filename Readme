@@ -1,0 +1,9 @@
+dépendances :
+
+flask
+flask-sqlalchemy
+flask-wtf
+flask-login
+python-ldap (pour l'instant)
+transmissionrpc
+python-magic

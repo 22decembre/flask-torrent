@@ -6,25 +6,26 @@
     {% else %}
     <title>torrents</title>
     {% endif %}
-    <link rel="stylesheet" type="text/css" href="/static/css/uikit.css">
-	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
-	<script src="/static/js/uikit.min.js"></script>
-	<script src="/static/js/uikit.js"></script>
+    <link rel="stylesheet" type="text/css" href="/static/css/knass.css">
+	{# <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script> #}
+	{# <script src="/static/js/uikit.min.js"></script> #}
+	{# <script src="/static/js/uikit.js"></script> #}
 	<script src="/static/js/moment.js"></script>
     <meta charset="utf-8" />
   </head>
   <body>
-	<nav class="uk-navbar">
-		<ul class="uk-navbar-nav">
+  
+	<nav>
 		{% if g.user.is_authenticated() %}
-		<li><a href="/index">Torrents</a></li>
-		<li><a href="#">Admin</a></li>
-		<li><a href="/logout">Log out</a></li>
-		{% endif %}
-		<li><a href="#">Credits</a></li>
-		</ul>
+		<a href="/index">Torrents</a> |
+			{% if g.user.is_admin() %}
+			<a href="/admin">Admin</a> |
+			{% endif %}
+		<a href="/logout">Log out</a> | {% endif %}
+		<a href="#">Credits</a>
 	</nav>
+	<hr>
+	
     {% block content %}{% endblock %}
-	</div>
   </body>
 </html>
