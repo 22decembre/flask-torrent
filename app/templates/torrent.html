@@ -18,10 +18,10 @@
 		<li>Progress of download process : {{torrent.progress}} %</li>
 		<li>Priority : {{control.bandwidthpriority}}</li>
 		<li>Date of start : {{momentjs(torrent.addedDate).calendar()}}</li>
-		<li>Last start date : {{torrent.startDate}}</li>
-		{# <li>Estimated remaining time : {{torrent.eta}}</li>
+		<li>Last start date : {{momentjs(torrent.startDate).calendar()}}</li>
+		<li>Estimated remaining time : {{torrent.format_eta()}}</li>
 		<li>Leechers : {{torrent.leechers}}</li>
-		<li>Seeders : {{torrent.seeders}}</li> #}
+		<li>Seeders : {{torrent.seeders}}</li>
 		</ul>
 	</div>
 	<div>
@@ -30,7 +30,7 @@
 		<li>Number of peers sending to us : {{torrent.peersSendingToUs}}</li>
 		<li>Download rate : {{torrent.rateDownload}} bits/s</li>
 		<li>Download limit : {{control.downloadlimit(class="uk-form-width-small",value=torrent.downloadLimit)}} KB/s</li>
-		<li>{{torrent.downloadLimitMode}}</li>
+		<li><label>Download limit mode</label> {{torrent.downloadLimitMode}}</li>
 		<li>Corrupt data downloaded : {{torrent.corruptEver|filesizeformat}}</li>
 		</ul>
 	</div>
@@ -40,7 +40,7 @@
 		<li>Number of peers getting from us : {{torrent.peersGettingFromUs}}</li>
 		<li>Upload rate : {{torrent.rateUpload}} bits/s</li>
 		<li><label>Upload limit :</label>{{control.uploadlimit(class="uk-form-width-small",value=torrent.uploadLimit)}} KB/s</li>
-		<li>{{torrent.UploadLimitMode}}</li>
+		<li><label>Upload limit mode</label> {{torrent.UploadLimitMode}}</li>
 		<li><label>Ratio mode :</label>{{control.ratiomode}}</li>
 		<li><label>Ratio limit :</label>{{control.ratiolimit(class="uk-form-width-small",value=torrent.seedRatioLimit,step=0.1)}}</li>
 		<li>Ratio : {{torrent.ratio}}</li>
@@ -58,9 +58,9 @@
 	<table>
 		<tr>
 			<th>File name</th>
-			<th>Completed / Size</th>
-			<th>Selected</th>
-			<th>Priority</th>
+			<th WIDTH="12%">Completed / Size</th>
+			<th WIDTH="6%">Selected</th>
+			<th WIDTH="8%">Priority</th>
 		</tr>
 		
 		{% for file in control.files %}

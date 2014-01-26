@@ -77,16 +77,16 @@ def login():
 @login_required
 def torrent(tor_id):
 	user = g.user
-	
+
 	# fetch informations about the torrent from transmission
 	torrent = client.get_torrent(tor_id)
 	# fetch information about the torrent from DB
 	tordb = Torrent.query.filter_by(hashstring = torrent.hashString).first()
 	if tordb.user != unicode(user):
 		return render_template("404.html")
+	
 	else:
 		###
-		#error = ''
 		if torrent.error == 1:
 			torrent.error = 'tracker warning'
 		if torrent.error == 2:
@@ -101,22 +101,24 @@ def torrent(tor_id):
 		#	torrent.seedRatioMode = 'Individual ratio limit'
 		#if torrent.seedRatioMode == 2:
 		#	torrent.seedRatioMode = 'Unlimited seeding'
+		files_number = 0
 		control = TorrentForm(ratiomode=torrent.seedRatioMode,bandwidthpriority=torrent.bandwidthPriority)
 		###
 		for file_x in client.get_files(tor_id)[torrent.id]:
-			f_form = TorrentFileDetails(csrf_enabled=False)
+			print(client.get_files(tor_id)[torrent.id][file_x])
+			# no csrf because this form is just a part of a bigger one which has already its own csrf !
+			#f_form = TorrentFileDetails(csrf_enabled=False)
+			f_form = TorrentFileDetails()
 			f_form.key = file_x
 			f_form.filename	= unicode(client.get_files(tor_id)[torrent.id][file_x]['name'])
 			f_form.priority  = client.get_files(tor_id)[torrent.id][file_x]['priority']
 			f_form.size 	 = client.get_files(tor_id)[torrent.id][file_x]['size']
 			f_form.completed = client.get_files(tor_id)[torrent.id][file_x]['completed']
-			f_form.selected.default  = client.get_files(tor_id)[torrent.id][file_x]['selected']
+			f_form.selected  = client.get_files(tor_id)[torrent.id][file_x]['selected']
 			
 			control.files.append_entry(f_form)
 		
-		# the form is not validated because of the csrf trick !
 		if control.validate_on_submit():
-			print('valide')
 			update = False
 			# by default, ratio limit can be updated !
 			update_ratio_limit = True
@@ -162,28 +164,36 @@ def torrent(tor_id):
 			# but still, begin with the torrent.id, this is why the second torrent.id
 			#files_dict = client.get_files(torrent.id)[torrent.id]
 			files_answers = {}
+			
 			for file_un in control.files:
+				files_update = False
 				# create a dict that contains the new priority for each file according to the form
-				file_answer = {}
-				if file_un.priority.data != client.get_files(tor_id)[torrent.id][int(file_un.key.data)]['priority']:
+				file_answer = client.get_files(tor_id)[torrent.id][int(file_un.key.data)]
+				if file_un.priority.data != file_answer['priority']:
+					update = True
+					files_update = True
 					file_answer['priority'] = file_un.priority.data
-				
-				if file_un.selected.data != client.get_files(tor_id)[torrent.id][int(file_un.key.data)]['selected']:
+					
+				if file_un.selected.data != file_answer['selected']:
+					update = True
+					files_update = True
 					file_answer['selected'] = file_un.selected.data
 				
 				# append the dict to the general dict previously created (files_answers).
 				# the key is the ID of the file itself ! >> no value name !
-				files_answers[int(file_un.key.data)] = file_answer
+				if files_update:
+					files_answers[int(file_un.key.data)] = file_answer
 			
 			#finally, we create the last dict which will contain only one value : the files_answers dict !
 			answer = {}
 			answer[int(torrent.id)] = files_answers
-			update = True
+			print(answer)
 			client.set_files(answer)
 			
 			if update:
 				torrent.update()
 			#start_stop_torrent(tor_id)
+			return redirect(redirect_url())
 		else:
 			print(control.errors)
 			print(control.ratiomode.data)
@@ -238,14 +248,12 @@ def index():
 	form = TorrentSeedForm()
 	if form.validate_on_submit():
 		if form.torrentseed_file.data.mimetype == 'application/x-bittorrent':
-			#torrent_to_start = form.torrentseed_file.data
 			filename = secure_filename(form.torrentseed_file.data.filename)
 			form.torrentseed_file.data.save(os.path.join(basedir + '/tmp', filename))
 			f = open(basedir + '/tmp/' + filename)
 			torrent_to_start = base64.b64encode(f.read())
 		else:
 			torrent_to_start = form.torrentseed_url.data
-		#form.torrentfile_url.data
 		try:
 			# ON ajoute le torrent à transmission
 			new_tor = client.add_torrent(torrent_to_start)
@@ -260,6 +268,7 @@ def index():
 			db.session.commit()
 		except tr.TransmissionError:
 			print(message)
+		return redirect(redirect_url())
 		
 	return render_template("index.html", form = form, title = "Home", user = g.user, torrents = torrents)
 
