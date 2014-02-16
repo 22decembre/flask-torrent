@@ -3,7 +3,7 @@
 
 <h1>Hello, {{user}} !</h1>
 
-<form action="/index" method="post" name="index" enctype="multipart/form-data">
+<form action="{{ url_for('index') }}" method="post" name="index" enctype="multipart/form-data">
 <fieldset>
     {{form.hidden_tag()}}
     <legend>Envoyer un nouveau torrent</legend>
@@ -21,7 +21,7 @@
 	</tr>
 
 	{% for torrent in torrents %}
-	{# <form action="/index" method="post" name="torrent">
+	{# <form action="{{ url_for('index') }}" method="post" name="torrent">
 	{{torrent.control_form.hidden_tag()}} #}
 	<tr>
 		{# we shall be able to adjust bandwich priority of the torrents there ! #}
