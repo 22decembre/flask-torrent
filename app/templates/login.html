@@ -2,13 +2,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-<form class="uk-form" action="" method="post" name="login">
+<form action="" method="post" name="login">
 <fieldset>
 	<legend>Authentification</legend>
     {{form.hidden_tag()}}
     {{form.username}}
     {{form.password}}
     {{form.remember_me}}
-    <button class="uk-button" type="submit" value="Login">Login</button>
+    <button type="submit" value="Login">Login</button>
 </form>
 {% endblock %}
