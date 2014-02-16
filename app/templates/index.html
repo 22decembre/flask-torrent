@@ -3,7 +3,7 @@
 
 <h1>Hello, {{user}} !</h1>
 
-<form action="{{ url_for('/index') }}" method="post" name="index" enctype="multipart/form-data">
+<form action="/index" method="post" name="index" enctype="multipart/form-data">
 <fieldset>
     {{form.hidden_tag()}}
     <legend>Envoyer un nouveau torrent</legend>
@@ -21,18 +21,18 @@
 	</tr>
 
 	{% for torrent in torrents %}
-	{# <form action="{{ url_for('/index') }}" method="post" name="torrent">
+	{# <form action="/index" method="post" name="torrent">
 	{{torrent.control_form.hidden_tag()}} #}
 	<tr>
 		{# we shall be able to adjust bandwich priority of the torrents there ! #}
 		<td>
-			<p><a href='{{ url_for('/torrent/torrent.hashString') }}'>{{torrent.name}}</a> is {{torrent.status}} and {{torrent.progress|round(2,'common')}} % finished.</p>
+			<p><a href="{{ url_for('torrent', tor_id=torrent.hashString) }}">{{torrent.name}}</a> is {{torrent.status}} and {{torrent.progress|round(2,'common')}} % finished.</p>
 		</td>
 		{# <td>
 		{{torrent.bandwidthpriority(default=torrent.bandwidthPriority)}}
 		</td> #}
 		<td>
-			<a href='{{ url_for('/start/torrent.hashString') }}'>Start</a> | <a href='{{ url_for('/stop/torrent.hashString') }}'>Stop</a> | <a href='{{ url_for('/del/torrent.hashString') }}'>Del</a> | <a href='{{ url_for('/del_tot/torrent.hashString') }}'>Del totally</a></li>
+			<a href="{{ url_for('start', tor_id=torrent.hashString) }}">Start</a> | <a href="{{ url_for('stop', tor_id=torrent.hashString) }}">Stop</a> | <a href="{{ url_for('erase', tor_id=torrent.hashString) }}">Del</a> | <a href="{{ url_for('suppr', tor_id=torrent.hashString) }}">Del totally</a></li>
 		</td>
 	</tr>
 	{% endfor %}

@@ -55,7 +55,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-@app.route("/login", methods=["GET", "POST"])
+@app.route('/login', methods=["GET", "POST"])
 def login():
 	if g.user is not None and g.user.is_authenticated():
 		return redirect(url_for('index'))
@@ -201,30 +201,33 @@ def torrent(tor_id):
 
 @app.route('/start/<tor_id>', methods = ['GET','POST'])
 @login_required
-def torrent_start(tor_id):
+def start(tor_id):
 	torrent = client.get_torrent(tor_id)
-	torrent.start()
+	if action=='start':
+		torrent.start()
+	if action=='stop':
+		torrent.stop()
 	return redirect(redirect_url())
 
 @app.route('/stop/<tor_id>', methods = ['GET','POST'])
 @login_required
-def torrent_stop(tor_id):
+def stop(tor_id):
 	torrent = client.get_torrent(tor_id)
 	torrent.stop()
 	return redirect(redirect_url())
 
-@app.route('/del/<tor_id>', methods = ['GET','POST'])
+@app.route('/erase/<tor_id>', methods = ['GET','POST'])
 @login_required
-def torrent_del(tor_id):
+def erase(tor_id):
 	torrent = client.remove_torrent(tor_id, delete_data=False)
 	torrent_to_del = Torrent.query.filter_by(hashstring=tor_id).first()
 	db.session.delete(torrent_to_del)
 	db.session.commit()
 	return redirect(redirect_url())
 
-@app.route('/del_tot/<tor_id>', methods = ['GET','POST'])
+@app.route('/suppr/<tor_id>', methods = ['GET','POST'])
 @login_required
-def torrent_del_tot(tor_id):
+def suppr(tor_id):
 	torrent = client.remove_torrent(tor_id, delete_data=True)
 	torrent_to_del = Torrent.query.filter_by(hashstring=tor_id).first()
 	db.session.delete(torrent_to_del)
@@ -258,8 +261,9 @@ def index():
 			# ON ajoute le torrent à transmission
 			new_tor = client.add_torrent(torrent_to_start)
 			new_tor.downloadDir = g.user.dl_dir
-
-			print(g.user.dl_dir)
+			
+			#app.logger.info('%(new_tor)% demarré et ajouté à la base de données par %(user)%.')
+			
 			new_tor.update()
 			
 			# on ajoute le torrent à la base de données pour se souvenir à qui il appartient.
@@ -267,12 +271,12 @@ def index():
 			db.session.add(torrent_to_add)
 			db.session.commit()
 		except tr.TransmissionError:
-			print(message)
+			#print(message)
+			app.logger.info(tr.TransmissionError)
 		return redirect(redirect_url())
 		
 	return render_template("index.html", form = form, title = "Home", user = g.user, torrents = torrents)
 
-@app.route('/')
 @app.route('/admin', methods = ['GET', 'POST'])
 @login_required
 def admin():
