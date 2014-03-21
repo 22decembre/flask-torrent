@@ -5,10 +5,6 @@ from flask.ext.login import LoginManager, login_user, UserMixin, login_required,
 import os
 from flask.ext.sqlalchemy import SQLAlchemy
 
-
-
-
-
 app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
