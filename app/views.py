@@ -17,7 +17,7 @@ client = tr.Client(address=app.config['TRANSMISSION_HOST'],
 # tr_session car il y a déjà un session quelque part : la session web avec auth et mots de passe (entre autre)
 tr_session = tr.Session(client)
 tr_session.script_torrent_done_enabled = True
-tr_session.script_torrent_done_filename = os.path.dirname(os.path.realpath(__file__))."/finish.py"
+tr_session.script_torrent_done_filename = os.path.dirname(os.path.realpath(__file__)) + "/finish.py"
 
 
 def redirect_url():
@@ -37,11 +37,6 @@ def internal_error(error):
 @app.errorhandler(410)
 def internal_error(error):
     return render_template('410.html'), 410
-
-@app.errorhandler(500)
-def internal_error(error):
-    db.session.rollback()
-    return render_template('500.html'), 500
 
 @app.before_request
 def before_request():
@@ -244,6 +239,7 @@ def suppr(tor_id):
 @login_required
 def index():
 	user = g.user
+	print(user.is_admin())
 	
 	# recuperer les torrents de l'utilisateur et de lui uniquement !
 	torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
@@ -259,21 +255,6 @@ def index():
 		#form.bandwidthpriority = torrent.bandwidthPriority
 		torrents_forms[torrent.hashString]=form
 
-	#control_form = Torrents()
-	###
-	#for torrent_x in torrents:
-		#t_form = TorrentBandwidth(csrf_enabled=False)
-		#t_form = torrent_x
-		#t_form.bandwidthpriority = torrent_x.bandwidthPriority
-		#t_form.tor_progress = torrent_x.progress
-		#t_form.tor_id=torrent_x.hashString
-		#t_form.tor_status=torrent_x.status
-		#t_form.tor_name=torrent_x.name
-		#control_form.torrents.append_entry(t_form)
-	
-	#if control.validate_on_submit():
-		
-		
 	# envoi d'un nouveau torrent
 	form = TorrentSeedForm()
 	if form.validate_on_submit():
@@ -288,18 +269,14 @@ def index():
 			# ON ajoute le torrent à transmission
 			new_tor = client.add_torrent(torrent_to_start)
 			new_tor.start()
-			# new_tor.downloadDir = g.user.dl_dir
 			
-			# app.logger.info('%(new_tor)% demarré et ajouté à la base de données par %(user)%.')
-			
-			#new_tor.update()
+			app.logger.info('%(new_tor)% demarré et ajouté à la base de données par %(user)%.')
 			
 			# on ajoute le torrent à la base de données pour se souvenir à qui il appartient.
 			torrent_to_add = Torrent(hashstring=new_tor.hashString,user=unicode(g.user))
 			db.session.add(torrent_to_add)
 			db.session.commit()
 		except tr.TransmissionError:
-			#print(message)
 			app.logger.info(tr.TransmissionError)
 		return redirect(redirect_url())
 		
