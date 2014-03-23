@@ -288,7 +288,19 @@ def admin():
 	user = g.user
 	if user.is_admin():
 		torrents = client.get_torrents()
-		return render_template("index.html", title = "Home", user = g.user, torrents = torrents)
-	else:
-		return render_template("404.html")
+		torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
+	listing =list()
+	for x in torrents_from_db:
+		listing.append(x.hashstring)
+	
+	torrents_forms = dict()
+	torrents = client.get_torrents(listing)
+	for torrent in torrents:
+		form = TorrentBandwidth()
+		form.tor_id = torrent.hashString
+		#form.bandwidthpriority = torrent.bandwidthPriority
+		torrents_forms[torrent.hashString]=form
+
+	return render_template("index.html", title = "Admin", user = g.user, torrents = torrents, torrents_forms = torrents_forms)
+
 		
