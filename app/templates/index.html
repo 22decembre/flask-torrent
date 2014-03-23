@@ -31,7 +31,7 @@
 			<p><a href="{{ url_for('torrent', tor_id=torrent.hashString) }}">{{torrent.name}}</a> is {{torrent.status}} and {{torrent.progress|round(2,'common')}} % finished.</p>
 		</td>
 		<td>
-		{{torrent.bandwidthPriority}}
+		{{torrents_forms[torrent.hashString].bandwidthpriority(default=torrent.bandwidthPriority)}}
 		</td>
 		<td>
 			<a href="{{ url_for('start', tor_id=torrent.hashString) }}">Start</a> | <a href="{{ url_for('stop', tor_id=torrent.hashString) }}">Stop</a> | <a href="{{ url_for('erase', tor_id=torrent.hashString) }}">Del</a> | <a href="{{ url_for('suppr', tor_id=torrent.hashString) }}">Del totally</a></li>

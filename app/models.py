@@ -45,7 +45,7 @@ class User(UserMixin):
 		self.home = result[0][1]['homeDirectory'][0]
 		self.dl_dir = self.home + '/torrents/'
 		
-		if result[0][1]['mail'] is not None:
+		if result[0][1].has_key('mail') and result[0][1]['mail'] is not None:
 			self.mail = result[0][1]['mail'][0]
 		else:
 			self.mail = self.name

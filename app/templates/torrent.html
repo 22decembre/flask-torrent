@@ -28,7 +28,7 @@
 		<ul>
 		<li>Number of peers sending to us : {{torrent.peersSendingToUs}}</li>
 		<li>Download rate : {{torrent.rateDownload}} bits/s</li>
-		<li>Download limit : {{control.downloadlimit(size=10,value=torrent.downloadLimit)}} KB/s</li>
+		<li>Download limit : {{control.downloadlimit(value=torrent.downloadLimit)}} KB/s</li>
 		<li><label>Download limit mode</label> {{torrent.downloadLimitMode}}</li>
 		<li>Corrupt data downloaded : {{torrent.corruptEver|filesizeformat}}</li>
 		</ul>
@@ -38,7 +38,7 @@
 		<ul>
 		<li>Number of peers getting from us : {{torrent.peersGettingFromUs}}</li>
 		<li>Upload rate : {{torrent.rateUpload}} bits/s</li>
-		<li><label>Upload limit :</label>{{control.uploadlimit(size=10,value=torrent.uploadLimit)}} KB/s</li>
+		<li><label>Upload limit :</label>{{control.uploadlimit(value=torrent.uploadLimit)}} KB/s</li>
 		<li><label>Upload limit mode</label> {{torrent.UploadLimitMode}}</li>
 		<li><label>Ratio mode :</label>{{control.ratiomode}}</li>
 		<li><label>Ratio limit :</label>{{control.ratiolimit(value=torrent.seedRatioLimit,step=0.1)}}</li>

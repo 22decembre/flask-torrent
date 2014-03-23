@@ -39,3 +39,15 @@ class TorrentForm(Form):
 class TorrentSeedForm(Form):
     torrentseed_url = TextField('torrentseed_url')
     torrentseed_file = FileField('torrentseed_file')
+
+class TorrentBandwidth(Form):
+	tor_id = HiddenField('tor_id')
+	bandwidthpriority = SelectField(u'Torrent priority', choices=[( '-1','low'),('0','normal'),('1','high')])
+	#bandwidthpriority = SelectField(u'Torrent priority', choices=[( 'low','low'),('normal','normal'),('high','high')])
+	def __init__(self, *args, **kwargs):
+		kwargs['csrf_enabled'] = False
+		super(TorrentBandwidth, self).__init__(*args, **kwargs)
+		
+class Torrents(Form):
+	#b_priority = SelectField(u'Torrent priority', choices=[( '-1','low'),('0','normal'),('1','high')])
+	torrents = FieldList(FormField(TorrentBandwidth))
