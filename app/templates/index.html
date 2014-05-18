@@ -5,42 +5,42 @@
 
 {% if form %}
 <div class="row">
-<form action="{{ url_for('index') }}" method="post" name="index" enctype="multipart/form-data">
+<form action="{{ url_for('index') }}" method="post" enctype="multipart/form-data">
 <fieldset>
     {{form.hidden_tag()}}
     <legend>Envoyer un nouveau torrent</legend>
     <p>Url (web or magnet) : {{form.torrentseed_url(size=100)}}</p>
     <p>File : {{form.torrentseed_file}}</p>
-    <button type="submit" value="Envoyer">Envoyer</button>
+    <button type="submit">Envoyer</button>
 </fieldset>
-</form>
-</div>
-{% endif %}
 
-<div class="row">
 <table>
-	{% if torrents %}
+	{% if form.torrents %}
 	<tr>
 		<th>Torrent</th>
 		<th>Priority</th>
 		<th>Controls</th>
 	</tr>
 
-	{% for torrent in torrents %}
+	{% for torrent in form.torrents %}
 	<tr>
+	{{torrent.tor_id}}
 		{# we shall be able to adjust bandwich priority of the torrents there ! #}
 		<td>
-			<p><a href="{{ url_for('torrent', tor_id=torrent.hashString) }}">{{torrent.name}}</a> is {{torrent.status}} and {{torrent.progress|round(2,'common')}} % finished.</p>
+			<p><a href="{{ url_for('torrent', tor_id=torrent.tor_id.data) }}">{{torrent.torrentname.data}}</a> is {{torrent.status.data}} and {{torrent.progress.data|round(2,'common')}} % finished.</p>
 		</td>
 		<td>
-		{{torrents_forms[torrent.hashString].bandwidthpriority(default=torrent.bandwidthPriority)}}
+		{{torrent.bandwidthpriority}}
 		</td>
 		<td>
-			<a href="{{ url_for('start', tor_id=torrent.hashString) }}">Start</a> | <a href="{{ url_for('stop', tor_id=torrent.hashString) }}">Stop</a> | <a href="{{ url_for('erase', tor_id=torrent.hashString) }}">Del</a> | <a href="{{ url_for('suppr', tor_id=torrent.hashString) }}">Del totally</a></li>
+			<a href="{{ url_for('start', tor_id=torrent.tor_id.data) }}">Start</a> | <a href="{{ url_for('stop', tor_id=torrent.tor_id.data) }}">Stop</a> | <a href="{{ url_for('erase', tor_id=torrent.tor_id.data) }}">Del</a> | <a href="{{ url_for('suppr', tor_id=torrent.tor_id.data) }}">Del totally</a>
 		</td>
 	</tr>
 	{% endfor %}
 	{% endif %}
 </table>
+
+</form>
+{% endif %}
 </div>
 {% endblock %}

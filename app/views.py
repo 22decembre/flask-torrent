@@ -4,7 +4,7 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 from werkzeug import secure_filename
 from app   import app, db, lm
 from config import basedir, ADMINS
-from forms import TorrentSeedForm, TorrentFileDetails, TorrentForm, LoginForm, Torrents, TorrentBandwidth
+from forms import IndexForm, TorrentFileDetails, TorrentForm, LoginForm, TorrentIndex
 from models import User, Torrent
 import transmissionrpc as tr
 import sys, os, base64, magic
@@ -90,20 +90,10 @@ def torrent(tor_id):
 		if torrent.error == 3:
 			torrent.error = 'local error'
 		
-		###
-		#if torrent.seedRatioMode == 0:
-		#	torrent.seedRatioMode = 'Global ratio limit'
-		#if torrent.seedRatioMode == 1:
-		#	torrent.seedRatioMode = 'Individual ratio limit'
-		#if torrent.seedRatioMode == 2:
-		#	torrent.seedRatioMode = 'Unlimited seeding'
-		#files_number = 0
 		control = TorrentForm(ratiomode=torrent.seedRatioMode,bandwidthpriority=torrent.bandwidthPriority)
 		###
 		for file_x in client.get_files(tor_id)[torrent.id]:
-			#print(client.get_files(tor_id)[torrent.id][file_x])
 			# no csrf because this form is just a part of a bigger one which has already its own csrf !
-			#f_form = TorrentFileDetails(csrf_enabled=False)
 			f_form = TorrentFileDetails()
 			f_form.key = file_x
 			f_form.filename	= unicode(client.get_files(tor_id)[torrent.id][file_x]['name'])
@@ -131,6 +121,7 @@ def torrent(tor_id):
 					# we don't allow anymore the ratio limit to be updated : the ratiolimit will be the gloabal one !
 					update_ratio_limit = False
 				update = True
+			
 			# if we are still allowed to update ratio limit
 			# eg : we haven't touched ratiomode in form - update_ratio_limit is still at its default : true
 			# or it has been changed to single mode
@@ -145,14 +136,8 @@ def torrent(tor_id):
 			if control.uploadlimit.data != torrent.uploadLimit:
 				torrent.upload_limit = int(control.uploadlimit.data)
 				update = True
-			if control.bandwidthpriority.data != torrent.bandwidthPriority:
-				if control.bandwidthpriority.data == '-1':
-					torrent.priority = 'low'
-				if control.bandwidthpriority.data == '1':
-					torrent.priority = 'high'
-				if control.bandwidthpriority.data == '0':
-					torrent.priority = 'normal'
-				update = True
+			if int(control.bandwidthpriority.data) != int(torrent.bandwidthPriority):
+				updatebandwidthpriority(tor_id,control.bandwidthpriority.data)
 			
 			# we use the ID returned by transmission itself ! Not the hashString.
 			# the first torrent.id is to say which torrent we are talking about. Transmission gives us a dict containing the info for the torrents asked.
@@ -183,30 +168,34 @@ def torrent(tor_id):
 			#finally, we create the last dict which will contain only one value : the files_answers dict !
 			answer = {}
 			answer[int(torrent.id)] = files_answers
-			print(answer)
 			client.set_files(answer)
 			
 			if update:
 				torrent.update()
-			#start_stop_torrent(tor_id)
 			return redirect(redirect_url())
 		else:
-			print(control.errors)
-			print(control.ratiomode.data)
+			app.logger.info(control.errors)
 		return render_template("torrent.html", title = torrent.name, user = user, torrent = torrent, control = control)
 
-@app.route('/updatebandwidthpriority/<tor_id>/<new_prio>')
-@login_required
 def updatebandwidthpriority(tor_id,new_prio):
+	user = g.user
 	torrent = client.get_torrent(tor_id)
-	torrent.priority = new_prio
+	
+	if new_prio == '-1':
+		torrent.priority = 'low'
+	if new_prio == '1':
+		torrent.priority = 'high'
+	if new_prio == '0':
+		torrent.priority = 'normal'
 	torrent.update()
+	app.logger.info("%s a modifié la priorité de %s à %s", user,torrent,torrent.priority)
 
 @app.route('/start/<tor_id>', methods = ['GET','POST'])
 @login_required
 def start(tor_id):
 	torrent = client.get_torrent(tor_id)
 	torrent.start()
+	app.logger.info("%s demarré par %s.",tor_id,g.user)
 	return redirect(redirect_url())
 
 @app.route('/stop/<tor_id>', methods = ['GET','POST'])
@@ -214,6 +203,7 @@ def start(tor_id):
 def stop(tor_id):
 	torrent = client.get_torrent(tor_id)
 	torrent.stop()
+	app.logger.info("%s arreté par %s.",tor_id,g.user)
 	return redirect(redirect_url())
 
 @app.route('/erase/<tor_id>', methods = ['GET','POST'])
@@ -223,6 +213,7 @@ def erase(tor_id):
 	torrent_to_del = Torrent.query.filter_by(hashstring=tor_id).first()
 	db.session.delete(torrent_to_del)
 	db.session.commit()
+	app.logger.info("%s arreté et effacé définitivement par %s.",tor_id,g.user)
 	return redirect(redirect_url())
 
 @app.route('/suppr/<tor_id>', methods = ['GET','POST'])
@@ -232,6 +223,7 @@ def suppr(tor_id):
 	torrent_to_del = Torrent.query.filter_by(hashstring=tor_id).first()
 	db.session.delete(torrent_to_del)
 	db.session.commit()
+	app.logger.info("%s arreté et effacé définitivement, y compris les données téléchargées, par %s.",tor_id,g.user)
 	return redirect(redirect_url())
 
 @app.route('/')
@@ -239,48 +231,63 @@ def suppr(tor_id):
 @login_required
 def index():
 	user = g.user
-	print(user.is_admin())
 	
 	# recuperer les torrents de l'utilisateur et de lui uniquement !
 	torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
+	# this listing will be used to fetch torrents, and after, to check the update of torrents
 	listing =list()
 	for x in torrents_from_db:
 		listing.append(x.hashstring)
 	
-	torrents_forms = dict()
+	# envoi d'un nouveau torrent
+	form = IndexForm()
 	torrents = client.get_torrents(listing)
 	for torrent in torrents:
-		form = TorrentBandwidth()
-		form.tor_id = torrent.hashString
-		#form.bandwidthpriority = torrent.bandwidthPriority
-		torrents_forms[torrent.hashString]=form
-
-	# envoi d'un nouveau torrent
-	form = TorrentSeedForm()
+		torrent_x=TorrentIndex()
+		torrent_x.bandwidthpriority=torrent.bandwidthPriority
+		torrent_x.status = torrent.status
+		torrent_x.torrentname = torrent.name
+		torrent_x.progress = torrent.progress
+		torrent_x.tor_id = torrent.hashString
+		form.torrents.append_entry(torrent_x)
+	
+	torrent_to_start = False
 	if form.validate_on_submit():
+		for torrent_un in form.torrents:
+			x = client.get_torrent(unicode(torrent_un.tor_id.data))
+			# if the torrent is in the listing...
+			if torrent_un.bandwidthpriority.data != int(x.bandwidthPriority) and x.hashString in listing:
+				app.logger.info('%s priorité intiale %s, finale %s.',x.name,x.bandwidthPriority,torrent_un.bandwidthpriority.data)
+				# we update...
+				updatebandwidthpriority(x.hashString,torrent_un.bandwidthpriority.data)
+				# and we remove the id from the listing -> if we don't do so, torrents bandwidth priority is updated twice for some obscure reason
+				# thus staying at the first priority instead of being really updated to the user wish.
+				listing.remove(torrent_un.tor_id.data)
+		
 		if form.torrentseed_file.data.mimetype == 'application/x-bittorrent':
 			filename = secure_filename(form.torrentseed_file.data.filename)
 			form.torrentseed_file.data.save(os.path.join(basedir + '/tmp', filename))
 			f = open(basedir + '/tmp/' + filename)
 			torrent_to_start = base64.b64encode(f.read())
 		else:
-			torrent_to_start = form.torrentseed_url.data
-		try:
+			if form.torrentseed_url.data != '':
+				torrent_to_start = form.torrentseed_url.data
+		if torrent_to_start:
 			# ON ajoute le torrent à transmission
 			new_tor = client.add_torrent(torrent_to_start)
 			new_tor.start()
 			
-			app.logger.info('%(new_tor)% demarré et ajouté à la base de données par %(user)%.')
+			app.logger.info('%s demarré et ajouté à la base de données par %s.',new_tor,user)
 			
 			# on ajoute le torrent à la base de données pour se souvenir à qui il appartient.
 			torrent_to_add = Torrent(hashstring=new_tor.hashString,user=unicode(g.user))
 			db.session.add(torrent_to_add)
 			db.session.commit()
-		except tr.TransmissionError:
-			app.logger.info(tr.TransmissionError)
+		#except tr.TransmissionError:
+		#	app.logger.info(tr.TransmissionError)
 		return redirect(redirect_url())
 		
-	return render_template("index.html", form = form, title = "Home", user = g.user, torrents = torrents, torrents_forms = torrents_forms)
+	return render_template("index.html", form = form, title = "Home", user = g.user)
 
 @app.route('/admin', methods = ['GET', 'POST'])
 @login_required
@@ -298,9 +305,6 @@ def admin():
 	for torrent in torrents:
 		form = TorrentBandwidth()
 		form.tor_id = torrent.hashString
-		#form.bandwidthpriority = torrent.bandwidthPriority
 		torrents_forms[torrent.hashString]=form
 
 	return render_template("index.html", title = "Admin", user = g.user, torrents = torrents, torrents_forms = torrents_forms)
-
-		

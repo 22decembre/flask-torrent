@@ -3,7 +3,7 @@
 from flask.ext.wtf import Form
 from flask.ext.wtf.file import FileField, file_allowed
 from wtforms.fields.html5 import DecimalField
-from wtforms import TextField, BooleanField, SelectField, HiddenField, PasswordField, FormField, FieldList, StringField
+from wtforms import TextField, BooleanField, SelectField, HiddenField, PasswordField, FormField, FieldList, StringField, SubmitField
 from wtforms.validators import Required
 
 class LoginForm(Form):
@@ -36,18 +36,18 @@ class TorrentForm(Form):
 	# we append each individual file form to this, as we don't know how many there is in each torrent !
 	files 		= FieldList(FormField(TorrentFileDetails))
 
-class TorrentSeedForm(Form):
-    torrentseed_url = TextField('torrentseed_url')
-    torrentseed_file = FileField('torrentseed_file')
-
-class TorrentBandwidth(Form):
+class TorrentIndex(Form):
+	torrentname = HiddenField('torrentname')
+	progress = HiddenField('progress')
+	status = HiddenField('status')
 	tor_id = HiddenField('tor_id')
 	bandwidthpriority = SelectField(u'Torrent priority', choices=[( '-1','low'),('0','normal'),('1','high')])
-	#bandwidthpriority = SelectField(u'Torrent priority', choices=[( 'low','low'),('normal','normal'),('high','high')])
+	# we desactivate the csrf cause this particular form is within the TorretForm, so it can't be several csrf at the same time !
 	def __init__(self, *args, **kwargs):
 		kwargs['csrf_enabled'] = False
-		super(TorrentBandwidth, self).__init__(*args, **kwargs)
-		
-class Torrents(Form):
-	#b_priority = SelectField(u'Torrent priority', choices=[( '-1','low'),('0','normal'),('1','high')])
-	torrents = FieldList(FormField(TorrentBandwidth))
+		super(TorrentIndex, self).__init__(*args, **kwargs)
+
+class IndexForm(Form):
+	torrentseed_url = TextField('torrentseed_url')
+	torrentseed_file = FileField('torrentseed_file')
+	torrents = FieldList(FormField(TorrentIndex))
