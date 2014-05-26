@@ -1,21 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 
+
+<div class="row">
 <h1>Hello, {{user}} !</h1>
 
 {% if form %}
-<div class="row">
 <form action="{{ url_for('index') }}" method="post" enctype="multipart/form-data">
 <fieldset>
     {{form.hidden_tag()}}
     <legend>Envoyer un nouveau torrent</legend>
     <p>Url (web or magnet) : {{form.torrentseed_url(size=100)}}</p>
-    <p>File : {{form.torrentseed_file}}</p>
-    <button type="submit">Envoyer</button>
+	<div class="row">
+		<div class="large-6 columns"><p>File : {{form.torrentseed_file}}</p></div>
+		<div class="large-6 columns"><button class="small right" type="submit">Envoyer / Mettre à jour les torrents</button></div>
+	</div>
 </fieldset>
 
 <table>
-	{% if form.torrents %}
+	{% if form.torrents %}<div class="large-6 columns">
 	<tr>
 		<th>Torrent</th>
 		<th>Priority</th>
