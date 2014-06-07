@@ -3,13 +3,13 @@
 
 
 <div class="row">
-<h1>Hello, {{user}} !</h1>
+<h2>Hello, {{user}} !</h2>
 
 {% if form %}
 <form action="{{ url_for('index') }}" method="post" enctype="multipart/form-data">
 <fieldset>
     {{form.hidden_tag()}}
-    <legend>Envoyer un nouveau torrent</legend>
+    <legend>Send a new torrent</legend>
     <p>Url (web or magnet) : {{form.torrentseed_url(size=100)}}</p>
 	<div class="row">
 		<div class="large-6 columns"><p>File : {{form.torrentseed_file}}</p></div>
@@ -17,31 +17,37 @@
 	</div>
 </fieldset>
 
+{# <fieldset>
+<legend>Torrents</legend> #}
+<h2>Torrents</h2>
 <table>
-	{% if form.torrents %}<div class="large-6 columns">
-	<tr>
+	{% if form.torrents %}
+	<thead>
+	  <tr>
 		<th>Torrent</th>
-		<th>Priority</th>
-		<th>Controls</th>
-	</tr>
-
+		<th><center>Priority</center></th>
+		<th><center>Controls</center></th>
+	  </tr>
+	 </thead>
+	 
+	 <tbody>
 	{% for torrent in form.torrents %}
-	<tr>
+	
 	{{torrent.tor_id}}
 		{# we shall be able to adjust bandwich priority of the torrents there ! #}
-		<td>
-			<p><a href="{{ url_for('torrent', tor_id=torrent.tor_id.data) }}">{{torrent.torrentname.data}}</a> is {{torrent.status.data}} and {{torrent.progress.data|round(2,'common')}} % finished.</p>
-		</td>
-		<td>
-		{{torrent.bandwidthpriority}}
-		</td>
-		<td>
-			<a href="{{ url_for('start', tor_id=torrent.tor_id.data) }}">Start</a> | <a href="{{ url_for('stop', tor_id=torrent.tor_id.data) }}">Stop</a> | <a href="{{ url_for('erase', tor_id=torrent.tor_id.data) }}">Del</a> | <a href="{{ url_for('suppr', tor_id=torrent.tor_id.data) }}">Del totally</a>
-		</td>
-	</tr>
+		<tr>
+		    <td><a href="{{ url_for('torrent', tor_id=torrent.tor_id.data) }}">{{torrent.torrentname.data}}</a> is {{torrent.status.data}} and {{torrent.progress.data|round(2,'common')}} % finished.</td>
+		    <td>{{torrent.bandwidthpriority}}</td>
+		    <td>
+			<a href="{{ url_for('start', tor_id=torrent.tor_id.data) }}">Start</a> | <a href="{{ url_for('stop', tor_id=torrent.tor_id.data) }}">Stop</a> | <a href="{{ url_for('delete', tor_id=torrent.tor_id.data) }}">Del</a> | <a href="{{ url_for('erase', tor_id=torrent.tor_id.data) }}">Erase</a>
+		    </td>
+		</tr>
+	
 	{% endfor %}
+	</tbody>
 	{% endif %}
-</table>
+{# </table>
+</fieldset> #}
 
 </form>
 {% endif %}

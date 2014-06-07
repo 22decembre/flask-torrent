@@ -1,53 +1,70 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>{{torrent.name}} is {{torrent.status}}</h1>
+<div class="row">
+<h2>{{torrent.name}} is {{torrent.status}}</h2>
 
 <form action="{{url_for('torrent', tor_id=torrent.hashString)}}" method="post" name="torrent" >
 {{control.hidden_tag()}}
-<p>
-	<li><a href="{{url_for('start', tor_id=torrent.hashString)}}">Start</a> | <a href="{{url_for('stop', tor_id=torrent.hashString)}}">Stop</a>
-	<button name="button" id="button" type="submit" value="update">Update</button>
-</p>
-
-<div class="row">
-	<div class="small-2 large-4 columns">
+<fieldset>
+<legend>Controls</legend>
+	<div class="large-5 columns">
 		<h3>Status</h3>
-		<ul>
-		<li>Total size : {{torrent.totalSize|filesizeformat}}</li>
-		<li>Progress of download process : {{torrent.progress}} %</li>
-		<li>Priority : {{control.bandwidthpriority}}</li>
-		<li>Date of start : {{momentjs(torrent.addedDate).calendar()}}</li>
-		<li>Last start date : {{momentjs(torrent.startDate).calendar()}}</li>
-		<li>Estimated remaining time : {{torrent.format_eta()}}</li>
-		<li>Leechers : {{torrent.leechers}}</li>
-		<li>Seeders : {{torrent.seeders}}</li>
-		</ul>
+		<p>Total size : {{torrent.totalSize|filesizeformat}}<br />
+		Torrent {{torrent.progress}} % downloaded<br />
+		{% if torrent.addedDate %}
+		Date of start : {{momentjs(torrent.addedDate).calendar()}}<br />
+		{% endif %}
+		{% if torrent.startDate %}
+		Last start date : {{momentjs(torrent.startDate).calendar()}}<br />
+		{% endif %}
+		
+		Estimated remaining time : {{torrent.format_eta()}}<br />
+			{% if torrent.leechers %}
+			{{torrent.leechers}} Leechers<br />
+			{% endif %}
+			{% if torrent.seeders %}
+			{{torrent.seeders}} Seeders
+			{% endif %}
+		</p>
 	</div>
-	<div class="small-2 large-4 columns">
+	
+	<div class="large-3 columns">
 		<h3>Downloading</h3>
-		<ul>
-		<li>Number of peers sending to us : {{torrent.peersSendingToUs}}</li>
-		<li>Download rate : {{torrent.rateDownload}} bits/s</li>
-		<li>Download limit : {{control.downloadlimit(value=torrent.downloadLimit)}} KB/s</li>
-		<li><label>Download limit mode</label> {{torrent.downloadLimitMode}}</li>
-		<li>Corrupt data downloaded : {{torrent.corruptEver|filesizeformat}}</li>
-		</ul>
+		<p>{{torrent.peersSendingToUs}} peers send us data.<br />
+		{{torrent.corruptEver|filesizeformat}} corrupt data downloaded.<br />
+		Download rate : {{torrent.rateDownload}} bits/s<br />
+			{% if torrent.downloadLimitMode %}
+			Download limit mode {{torrent.downloadLimitMode}}<br />
+			{% endif %}
+		</p>
 	</div>
-	<div class="small-2 large-4 columns">
+	<div class="large-4 columns">
 		<h3>Uploading</h3>
-		<ul>
-		<li>Number of peers getting from us : {{torrent.peersGettingFromUs}}</li>
-		<li>Upload rate : {{torrent.rateUpload}} bits/s</li>
-		<li><label>Upload limit :</label>{{control.uploadlimit(value=torrent.uploadLimit)}} KB/s</li>
-		<li><label>Upload limit mode</label> {{torrent.UploadLimitMode}}</li>
-		<li><label>Ratio mode :</label>{{control.ratiomode}}</li>
-		<li><label>Ratio limit :</label>{{control.ratiolimit(value=torrent.seedRatioLimit,step=0.1)}}</li>
-		<li>Ratio : {{torrent.ratio}}</li>
-		</ul>
+		<p>{{torrent.peersGettingFromUs}} peers get data from us.<br />
+		Ratio : {{torrent.ratio|round(2,'common')}}<br />
+		Upload rate : {{torrent.rateUpload}} bits/s<br />
+			{% if torrent.UploadLimitMode %}
+			{{torrent.UploadLimitMode}} upload limit mode<br />
+			{% endif %}
+		</p>
 	</div>
-</div>
+	<hr>
+	<div class="large-5 columns">
+		<label>Priority : {{control.bandwidthpriority}}</label>
+		<a href="{{url_for('start', tor_id=torrent.hashString)}}">Start</a> | <a href="{{url_for('stop', tor_id=torrent.hashString)}}">Stop</a>
+		<button class="tiny right" type="submit" value="update">Update</button>
+	</div>
+	<div class="large-3 columns">
+		<label>Download limit (KB/s) : {{control.downloadlimit(value=torrent.downloadLimit)}}</label>
+		<label>Ratio mode :{{control.ratiomode}}</label>
+	</div>
+	<div class="large-4 columns">
+		<label>Upload limit (KB/s) :{{control.uploadlimit(value=torrent.uploadLimit)}}</label>
+		<label>Ratio limit :{{control.ratiolimit(value=torrent.seedRatioLimit,step=0.1)}}</label>
+	</div>
+	
+</fieldset>
 
-<div class="row">
 	{% if torrent.error != 0 %}
 	<p>There's a {{torrent.error}} :<br />
 	{{torrent.errorString}}</p>
@@ -55,25 +72,28 @@
 
 	<h2>Files</h2>
 	<table>
-		<tr>
-			<th>File name</th>
-			<th>Completed / Size</th>
-			<th>Selected</th>
-			<th>Priority</th>
-		</tr>
+		<thead>
+		    <tr>
+			<td>File name</td>
+			<td><center>Completed / Size</center></td>
+			<td><center>Selected</center></td>
+			<td width="110"><center>Priority</center></td>
+		    </tr>
+		</thead>
 		
+		<tbody>
 		{% for file in control.files %}
-		<tr>
 		{{file.key}}
+		    <tr>
 			<td>{{file.filename.data}}</td>
-			<td>{{file.completed.data|filesizeformat}} / {{file.size.data|filesizeformat}}</td>
-			<td>{{file.selected}}</td>
+			<td><center>{{file.completed.data|filesizeformat}} / {{file.size.data|filesizeformat}}</center></td>
+			<td><center>{{file.selected}}</center></td>
 			<td>{{file.priority}}</td>
-			{# <td><button type="submit">Send</button></td> #}
-		</tr>
+		    </tr>
 		{% endfor %}
-	</table>
-</div>
+		</tbody>
+	</table>	
 </form>
+</div>
 
 {% endblock %}
