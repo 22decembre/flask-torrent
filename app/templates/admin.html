@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<div class="row">
+
+<h2>Torrents</h2>
+<form action="{{ url_for('admin') }}" method="post">
+<table>
+	<thead>
+	  <tr>
+		<th>Torrent</th>
+		<th><center>Owner</center></th>
+		<th><center>Priority</center></th>
+		<th><center>Controls</center></th>
+	  </tr>
+	 </thead>
+	 
+	 <tbody>
+	{% for torrent in torrents_forms.torrents %}
+	
+	{# {{torrent.tor_id}} #}
+		{# we shall be able to adjust bandwich priority, owner of the torrents there, plus lock them maybe ! #}
+		<tr>
+		    <td><a href="{{ url_for('torrent', tor_id=torrent.tor_id) }}">{{torrent.torrentname.data}}</a> is {{torrent.status.data}}.</td>
+		    <td>{{torrent.owner}}</td>
+		    <td>{{torrent.bandwidthpriority}}</td>
+		    <td>
+			<a href="{{ url_for('start', tor_id=torrent.tor_id) }}">Start</a> | <a href="{{ url_for('stop', tor_id=torrent.tor_id) }}">Stop</a> | <a href="{{ url_for('delete', tor_id=torrent.tor_id) }}">Del</a> | <a href="{{ url_for('erase', tor_id=torrent.tor_id) }}">Erase</a>
+		    </td>
+		</tr>
+	
+	{% endfor %}
+	</tbody>
+</table>
+</form>
+
+</div>
+{% endblock %}

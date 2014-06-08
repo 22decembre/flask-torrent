@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from models import User, Torrent
 from flask.ext.wtf import Form
 from flask.ext.wtf.file import FileField, file_allowed
 from wtforms.fields.html5 import DecimalField
@@ -36,16 +37,43 @@ class TorrentForm(Form):
 	# we append each individual file form to this, as we don't know how many there is in each torrent !
 	files 		= FieldList(FormField(TorrentFileDetails))
 
+def possible_owner():
+	listing = Torrent.query.all()
+	listing2 = list()
+	# the owner selectfield expect a list of tuples
+	# the list is initialized with void values
+	list_tuple = [('','')]
+	for i in listing:
+		if i.user not in listing2:
+			listing2.append(i.user)
+			tup = (unicode(i.user),unicode(i.user))
+			list_tuple.append(tup)
+	return list_tuple
+
 class TorrentIndex(Form):
 	torrentname = HiddenField('torrentname')
 	progress = HiddenField('progress')
 	status = HiddenField('status')
+	user = HiddenField('user')
+	owner = SelectField('owner',choices=possible_owner())
 	tor_id = HiddenField('tor_id')
 	bandwidthpriority = SelectField(u'Torrent priority', choices=[( '-1','low'),('0','normal'),('1','high')])
 	# we desactivate the csrf cause this particular form is within the TorretForm, so it can't be several csrf at the same time !
 	def __init__(self, *args, **kwargs):
 		kwargs['csrf_enabled'] = False
 		super(TorrentIndex, self).__init__(*args, **kwargs)
+
+class TorrentAdmin(Form):
+	torrentname = HiddenField('torrentname')
+	status = HiddenField('status')
+	tor_id = HiddenField('tor_id')
+	owner = SelectField(u'owner')
+	bandwidthpriority = SelectField(u'Torrent priority', choices=[( '-1','low'),('0','normal'),('1','high')])
+	# we desactivate the csrf cause this particular form is within the TorretForm, so it can't be several csrf at the same time !
+	def __init__(self, *args, **kwargs):
+		kwargs['csrf_enabled'] = False
+		super(TorrentAdmin, self).__init__(*args, **kwargs)
+
 
 class IndexForm(Form):
 	torrentseed_url = TextField('torrentseed_url')

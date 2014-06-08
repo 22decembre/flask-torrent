@@ -4,7 +4,7 @@ from flask.ext.login import login_user, logout_user, current_user, login_require
 from werkzeug import secure_filename
 from app   import app, db, lm
 from config import basedir, ADMINS
-from forms import IndexForm, TorrentFileDetails, TorrentForm, LoginForm, TorrentIndex
+from forms import IndexForm, TorrentFileDetails, TorrentForm, LoginForm, TorrentIndex, TorrentAdmin
 from models import User, Torrent
 import transmissionrpc as tr
 import sys, os, base64, magic
@@ -16,9 +16,10 @@ client = tr.Client(address=app.config['TRANSMISSION_HOST'],
 		password=app.config['TRANSMISSION_PASS'], http_handler=None, timeout=None)
 # tr_session car il y a déjà un session quelque part : la session web avec auth et mots de passe (entre autre)
 tr_session = tr.Session(client)
-tr_session.script_torrent_done_enabled = True
+tr_session.script_torrent_done_enabled=True
 tr_session.script_torrent_done_filename = os.path.dirname(os.path.realpath(__file__)) + "/finish.py"
-
+tr_session.update()
+#tr_session.set_session(timeout=None,script_torrent_done_enabled = True,script_torrent_done_filename = os.path.dirname(os.path.realpath(__file__)) + "/finish.py")
 
 def redirect_url():
     return request.referrer or url_for('index')
@@ -78,10 +79,8 @@ def torrent(tor_id):
 	torrent = client.get_torrent(tor_id)
 	# fetch information about the torrent from DB
 	tordb = Torrent.query.filter_by(hashstring = torrent.hashString).first()
-	if tordb.user != unicode(user):
-		return render_template("404.html")
-	
-	else:
+	if tordb.user==unicode(user):
+
 		###
 		if torrent.error == 1:
 			torrent.error = 'tracker warning'
@@ -176,6 +175,9 @@ def torrent(tor_id):
 		else:
 			app.logger.info(control.errors)
 		return render_template("torrent.html", title = torrent.name, user = user, torrent = torrent, control = control)
+	
+	else:
+		return render_template("404.html")
 
 def updatebandwidthpriority(tor_id,new_prio):
 	user = g.user
@@ -206,9 +208,9 @@ def stop(tor_id):
 	app.logger.info("%s arreté par %s.",tor_id,g.user)
 	return redirect(redirect_url())
 
-@app.route('/erase/<tor_id>', methods = ['GET','POST'])
+@app.route('/delete/<tor_id>', methods = ['GET','POST'])
 @login_required
-def erase(tor_id):
+def delete(tor_id):
 	torrent = client.remove_torrent(tor_id, delete_data=False)
 	torrent_to_del = Torrent.query.filter_by(hashstring=tor_id).first()
 	db.session.delete(torrent_to_del)
@@ -216,9 +218,9 @@ def erase(tor_id):
 	app.logger.info("%s arreté et effacé définitivement par %s.",tor_id,g.user)
 	return redirect(redirect_url())
 
-@app.route('/suppr/<tor_id>', methods = ['GET','POST'])
+@app.route('/erase/<tor_id>', methods = ['GET','POST'])
 @login_required
-def suppr(tor_id):
+def erase(tor_id):
 	torrent = client.remove_torrent(tor_id, delete_data=True)
 	torrent_to_del = Torrent.query.filter_by(hashstring=tor_id).first()
 	db.session.delete(torrent_to_del)
@@ -231,6 +233,7 @@ def suppr(tor_id):
 @login_required
 def index():
 	user = g.user
+	#print(tr_session.get_session)
 	
 	# recuperer les torrents de l'utilisateur et de lui uniquement !
 	torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
@@ -247,7 +250,7 @@ def index():
 		torrent_x.bandwidthpriority=torrent.bandwidthPriority
 		torrent_x.status = torrent.status
 		torrent_x.torrentname = torrent.name
-		torrent_x.progress = torrent.progress
+		torrent_x.progress = float(torrent.progress)
 		torrent_x.tor_id = torrent.hashString
 		form.torrents.append_entry(torrent_x)
 	
@@ -295,16 +298,18 @@ def admin():
 	user = g.user
 	if user.is_admin():
 		torrents = client.get_torrents()
-		torrents_from_db = Torrent.query.filter_by(user = unicode(g.user)).all()
-	listing =list()
-	for x in torrents_from_db:
-		listing.append(x.hashstring)
-	
-	torrents_forms = dict()
-	torrents = client.get_torrents(listing)
-	for torrent in torrents:
-		form = TorrentBandwidth()
-		form.tor_id = torrent.hashString
-		torrents_forms[torrent.hashString]=form
+		torrents_forms = IndexForm()
+		for torrent in torrents:
+			form = TorrentIndex()
+			form.tor_id = torrent.hashString
+			form.torrentname = torrent.name
+			form.status = torrent.status
+			
+			t = Torrent.query.filter_by(hashstring = torrent.hashString).first()
+			if t!=None and t.user!=None:
+				form.owner = t.user
+			
+			form.bandwidthpriority=torrent.bandwidthPriority
+			torrents_forms.torrents.append_entry(form)
 
-	return render_template("index.html", title = "Admin", user = g.user, torrents = torrents, torrents_forms = torrents_forms)
+	return render_template("admin.html", title = "Admin", user = g.user, torrents = torrents, torrents_forms = torrents_forms)
