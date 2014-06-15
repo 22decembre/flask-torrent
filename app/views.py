@@ -292,6 +292,13 @@ def index():
 		
 	return render_template("index.html", form = form, title = "Home", user = g.user)
 
+@app.route('/log', methods = ['GET'])
+@login_required
+def log():
+	import tailer
+	lines=tailer.tail(open(app.config['LOG']), 50)
+	return render_template("log.html", title = "Logging",log = lines)
+
 @app.route('/admin', methods = ['GET', 'POST'])
 @login_required
 def admin():

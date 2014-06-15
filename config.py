@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 basedir = os.path.abspath(os.path.dirname(__file__))
+LOG = os.path.join(basedir, 'torrent.log')
 
 CSRF_ENABLED = True
 SECRET_KEY = 'BeishudFiwokshyocdum'
@@ -21,10 +22,11 @@ LDAP_ID ='uid'
 LDAP_BASE='ou=users,dc=22decembre,dc=eu'
 LDAP_SSL=0
 
-TRANSMISSION_HOST='192.168.0.2'
+TRANSMISSION_HOST='localhost'
 TRANSMISSION_PORT=9091
 TRANSMISSION_PASS='transmission'
 TRANSMISSION_USER='transmission'
 
 DEST_DL='torrents'
 ADMINS = ['stephane']
+

@@ -4,6 +4,7 @@ from flask import Flask
 from flask.ext.login import LoginManager, login_user, UserMixin, login_required, logout_user, current_user
 import os
 from flask.ext.sqlalchemy import SQLAlchemy
+#from config import log_file
 
 app = Flask(__name__)
 app.config.from_object('config')
@@ -20,7 +21,8 @@ app.jinja_env.globals['momentjs'] = momentjs
 
 import logging
 from logging.handlers import RotatingFileHandler
-file_handler = RotatingFileHandler('tmp/torrent.log', 'a', 1 * 1024 * 1024, 10)
+#file_handler = RotatingFileHandler('torrent.log', 'a', 1 * 1024 * 1024, 10)
+file_handler = RotatingFileHandler(app.config['LOG'], 'a', 1 * 1024 * 1024, 10)
 file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
 app.logger.setLevel(logging.INFO)
 file_handler.setLevel(logging.INFO)

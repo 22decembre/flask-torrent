@@ -28,6 +28,7 @@
 		<li><a href="{{ url_for('index') }}">Torrents</a></li>
 			{% if g.user.is_admin() %}
 			<li><a href="{{ url_for('admin') }}">Admin</a></li>
+			<li><a href="{{ url_for('log') }}">Log</a></li>
 			{% endif %}
 		<li><a href="{{url_for('logout') }}">Log out</a></li>
 		{% endif %}

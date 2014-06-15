@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+
+
+<div class="row">
+<p>These are the 50 last logs of the strom application :</p>
+
+<ul class="no-bullet">
+{% for line in log %}
+<li>
+{{ line }}
+</li>
+{% endfor %}
+</ul>
+
+</div>
+{% endblock %}
